@@ -21,9 +21,8 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
 def envelope(attack_time, decay_time, sustain_level, release_time, frames):
     attack_frames = int(frames * attack_time)
     decay_frames = int(frames * decay_time)
-    # sustain_frames = (1 - frames) * (attack_time + decay_time + release_time)
-    release_frames = frames * release_time
-    sustain_frames = frames - attack_frames - decay_frames - release_frames
+    release_frames = int(frames * release_time)
+    sustain_frames = int(frames - attack_frames - decay_frames - release_frames)
     assert frames == attack_frames + decay_frames + sustain_frames + release_frames
     return np.concatenate([
         np.linspace(0, 1, attack_frames),
