@@ -1,3 +1,6 @@
+import wave
+import random
+
 from contextlib import contextmanager
 from functools import lru_cache
 
@@ -150,7 +153,6 @@ def make_music(stream):
              (-2, 0, 3, 5, 7, 10)]
     bass_scale = [x / 2 for x in scale]
     while True:
-        import random
         sequence = [
             (random.choice(scale), BASE)
             for x in range(16)
@@ -213,7 +215,6 @@ def create_wav_file(filename):
         yield stream
 
     def write_file(stream):
-        import wave
         with wave.open(filename, 'wb') as wf:
             wf.setnchannels(1)
             wf.setsampwidth(2)
