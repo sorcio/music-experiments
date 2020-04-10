@@ -2,7 +2,6 @@ from contextlib import contextmanager
 from functools import lru_cache
 
 import numpy as np
-from pyaudio import PyAudio
 import soundcard as sc
 
 
@@ -22,9 +21,8 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
 def envelope(attack_time, decay_time, sustain_level, release_time, frames):
     attack_frames = int(frames * attack_time)
     decay_frames = int(frames * decay_time)
-    # sustain_frames = (1 - frames) * (attack_time + decay_time + release_time)
-    release_frames = frames * release_time
-    sustain_frames = frames - attack_frames - decay_frames - release_frames
+    release_frames = int(frames * release_time)
+    sustain_frames = int(frames - attack_frames - decay_frames - release_frames)
     assert frames == attack_frames + decay_frames + sustain_frames + release_frames
     return np.concatenate([
         np.linspace(0, 1, attack_frames),
@@ -192,35 +190,6 @@ class SoundcardOutput:
 
     def play_wave(self, wave):
         self.speaker.play(wave)
-
-
-class PyAudioOutput:
-    def __init__(self, stream):
-        self.stream = stream
-
-    def play_wave(self, wave):
-        wavedata = np.array(32768 * wave, dtype=np.int16)
-        chunks_count = 1 + wavedata.size // 128
-        for chunk in np.array_split(wavedata, chunks_count):
-            self.stream.write(chunk.tobytes())
-
-
-@contextmanager
-def open_pyaudio_stream(samplerate=SAMPLERATE):
-    audio = PyAudio()
-    stream = audio.open(
-        format=audio.get_format_from_width(2),
-        channels=1,
-        rate=samplerate,
-        output=True,
-        frames_per_buffer=0,
-    )
-    try:
-        yield PyAudioOutput(stream)
-    finally:
-        stream.stop_stream()
-        stream.close()
-        audio.terminate()
 
 
 @contextmanager
