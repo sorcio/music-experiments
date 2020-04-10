@@ -1,3 +1,6 @@
+import wave
+import random
+
 from contextlib import contextmanager
 from functools import lru_cache
 
@@ -12,10 +15,7 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
     frames = int(duration * samplerate)
     x = np.linspace(0, duration, frames)
     assert len(x) == frames
-    return ((0.5 * ampl) *
-        np.sin(
-            x * frequency * np.pi * 2
-        ))
+    return (0.5 * ampl) * np.sin(x * frequency * np.pi * 2)
 
 
 def envelope(attack_time, decay_time, sustain_level, release_time, frames):
@@ -146,40 +146,21 @@ def make_music(stream):
     TEMPO = 120
     BASE = 60 / TEMPO
     # G A C D E G
-    scale = [tone(x, 440) for x in
-             (-2, 0, 3, 5, 7, 10)]
+    scale = [tone(x, 440) for x in (-2, 0, 3, 5, 7, 10)]
     bass_scale = [x / 2 for x in scale]
     while True:
-        import random
-        sequence = [
-            (random.choice(scale), BASE)
-            for x in range(16)
-        ]
-        wave = np.concatenate(
-            list(play_sequence(sequence))
-        )
+        sequence = [(random.choice(scale), BASE) for x in range(16)]
+        wave = np.concatenate(list(play_sequence(sequence)))
 
-        sequence = [
-            (random.choice(bass_scale)
-                if x % 2 == 0 else 0, BASE)
-            for x in range(16)
-        ]
-        wave += np.concatenate(
-            list(play_sequence(sequence))
-        )
+        sequence = [(random.choice(bass_scale) if x % 2 == 0 else 0, BASE)
+                    for x in range(16)]
+        wave += np.concatenate(list(play_sequence(sequence)))
 
-        sequence = [
-            (random.choice(bass_scale)
-                if x % 4 == 0 else 0, BASE)
-            for x in range(16)
-        ]
-        wave += np.concatenate(
-            list(play_sequence(sequence))
-        )
+        sequence = [(random.choice(bass_scale) if x % 4 == 0 else 0, BASE)
+                    for x in range(16)]
+        wave += np.concatenate(list(play_sequence(sequence)))
 
-        # wave += np.concatenate(
-        #     list(play_drumbase([1, 0, 0, 0] * 4, BASE))
-        # )
+        # wave += np.concatenate(list(play_drumbase([1, 0, 0, 0] * 4, BASE)))
 
         stream.play_wave(wave)
 
@@ -213,7 +194,6 @@ def create_wav_file(filename):
         yield stream
 
     def write_file(stream):
-        import wave
         with wave.open(filename, 'wb') as wf:
             wf.setnchannels(1)
             wf.setsampwidth(2)
