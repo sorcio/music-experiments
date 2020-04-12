@@ -145,7 +145,8 @@ def open_sc_stream(samplerate=SAMPLERATE):
 
 
 class MyBuffer(bytearray):
-    write = bytearray.extend
+    def play_wave(self, data):
+        self.extend(np.int16(data * 32767))
 
 
 def _write_wav_file(filename, sample_rate, stream):
@@ -160,8 +161,10 @@ def _write_wav_file(filename, sample_rate, stream):
 @contextmanager
 def create_wav_file(filename, sample_rate=SAMPLERATE):
     stream = MyBuffer()
-    yield Synth(stream)
-    _write_wav_file(stream)
+    try:
+        yield Synth(stream)
+    finally:
+        _write_wav_file(filename, sample_rate, stream)
 
 
 @contextmanager
@@ -187,3 +190,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 2:
         module = sys.argv[1]
         run_synth(__import__(module).make_music)
+    if len(sys.argv) == 3:
+        module = sys.argv[1]
+        filename = sys.argv[2]
+        run_synth(__import__(module).make_music, output=filename)
