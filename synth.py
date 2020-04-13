@@ -1,7 +1,7 @@
-import wave
-
 from contextlib import contextmanager
 from functools import lru_cache, partial
+import threading
+import wave
 
 import numpy as np
 import soundcard as sc
@@ -127,21 +127,73 @@ class Synth:
         self.output.play_wave(wave)
 
 
+class Queue0:
+    """Bufferless Queue"""
+
+    def __init__(self):
+        self.mutex = threading.Lock()
+        self.not_empty = threading.Condition(self.mutex)
+        self.not_full = threading.Condition(self.mutex)
+        self.waiters = 0
+        self.data = []
+
+    def put(self, item, interrupt_delay=None):
+        with self.not_full:
+            while not self.waiters:
+                self.not_full.wait(timeout=interrupt_delay)
+            self.waiters -= 1
+            self.data.append(item)
+            self.not_empty.notify()
+
+    def get(self, interrupt_delay=None):
+        with self.not_empty:
+            self.waiters += 1
+            self.not_full.notify()
+            while not self.data:
+                self.not_empty.wait(timeout=interrupt_delay)
+            item = self.data.pop()
+            return item
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.get()
+
+
 class SoundcardOutput:
     def __init__(self, speaker):
         self.speaker = speaker
+        self.thread = None
 
     def play_wave(self, wave):
-        self.speaker.play(wave)
+        self.queue.put(wave, interrupt_delay=0.1)
+
+    def __enter__(self):
+        if self.thread:
+            raise RuntimeError("already running")
+        self.queue = Queue0()
+        self.thread = threading.Thread(target=self._feed_thread, daemon=True)
+        self.thread.start()
+        return self
+
+    def __exit__(self, *args):
+        pass
+
+    def _feed_thread(self):
+        for item in self.queue:
+            self.speaker.play(item)
 
 
 @contextmanager
-def open_sc_stream(samplerate=SAMPLERATE):
+def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1.0):
     speaker = sc.default_speaker()
     print(speaker)
-    with speaker.player(samplerate=samplerate) as player:
+    blocksize = samplerate * buffer_duration
+    with speaker.player(samplerate=samplerate, blocksize=blocksize) as player:
         # player.channels = [-1]
-        yield SoundcardOutput(player)
+        with SoundcardOutput(player) as output:
+            yield output
 
 
 class MyBuffer(bytearray):
