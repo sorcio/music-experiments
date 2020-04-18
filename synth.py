@@ -186,10 +186,10 @@ class SoundcardOutput:
 
 
 @contextmanager
-def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1.0):
+def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1):
     speaker = sc.default_speaker()
     print(speaker)
-    blocksize = samplerate * buffer_duration
+    blocksize = int(samplerate * buffer_duration)
     with speaker.player(samplerate=samplerate, blocksize=blocksize) as player:
         # player.channels = [-1]
         with SoundcardOutput(player) as output:
