@@ -186,7 +186,7 @@ class SoundcardOutput:
 
 
 @contextmanager
-def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1):
+def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1.0):
     speaker = sc.default_speaker()
     print(speaker)
     blocksize = int(samplerate * buffer_duration)
