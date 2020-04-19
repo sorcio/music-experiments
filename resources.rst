@@ -19,8 +19,8 @@ Tuning/Intervals
   * the `Equal temperament <https://en.wikipedia.org/wiki/Equal_temperament>`_
     divides the octave in 12 equal steps
   * if we build a scale by using a 3:2 ratio, the frequencies for the octaves
-    don't match
-  * the equal temperament is commonly used in classical and western music
+    don't match an exact 2:1 ratio
+  * therefore, the equal temperament is now commonly used in Western music
 
 * Mathematics of musical notes: https://www.youtube.com/watch?v=Q-0wBlkjGQo
 
