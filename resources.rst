@@ -21,3 +21,17 @@ Tuning/Intervals
   * if we build a scale by using a 3:2 ratio, the frequencies for the octaves
     don't match
   * the equal temperament is commonly used in classical and western music
+
+* Mathematics of musical notes: https://www.youtube.com/watch?v=Q-0wBlkjGQo
+
+Scales
+======
+
+* All about musical scales - A complete guide:
+  https://www.youtube.com/watch?v=Vq2xt2D3e3E
+
+
+Others
+======
+
+* The circle of 12 tones: http://www.ronjarzombek.com/rj12tone.html
