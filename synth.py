@@ -73,9 +73,12 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     for fm, am in harmonics:
         wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
     
-    env = envelope(0.1, 0.2, 0.6, 0.2, len(wave))
-    wave *= env
-    return wave
+    atk = 15
+    dcy = 20
+    sus = 0.6
+    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    #return wave * envelope(0.1, 0.2, 0.6, 0.2, len(wave))
+    return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
 @lru_cache()
