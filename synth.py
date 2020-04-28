@@ -17,32 +17,36 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
     return (0.5 * ampl) * np.sin(x * frequency * np.pi * 2)
 
 
-def envelope(attack_time, decay_time, sustain_level, release_time, frames, samplerate=SAMPLERATE, msecs=False):
+def envelope(attack_time, decay_time, sustain_level, release_time, frames):
     assert isinstance(frames, int)
 
-    if msecs is True:
-        attack_frames = int(attack_time / 1000 * samplerate)
-        decay_frames = int(decay_time / 1000 * samplerate)
-        release_frames = int(release_time / 1000 * samplerate)
-        sustain_frames = 0
-        padding_frames = frames - attack_frames - decay_frames - release_frames
-    else:
-        # Original behavior
-        attack_frames = int(frames * attack_time)
-        decay_frames = int(frames * decay_time)
-        release_frames = int(frames * release_time)
-        sustain_frames = frames - attack_frames - decay_frames - release_frames
-        padding_frames = 0
-
-    attack_frames = np.clip(attack_frames, 0, None)
-    decay_frames = np.clip(decay_frames, 0, None)
-    release_frames = np.clip(release_frames, 0, None)
-    sustain_frames = np.clip(sustain_frames, 0, None)
-    padding_frames = np.clip(padding_frames, 0, None)
+    attack_frames = int(frames * attack_time)
+    decay_frames = int(frames * decay_time)
+    release_frames = int(frames * release_time)
+    sustain_frames = frames - attack_frames - decay_frames - release_frames
     return np.concatenate([
         np.linspace(0, 1, attack_frames),
         np.linspace(1, sustain_level, decay_frames),
         np.linspace(sustain_level, sustain_level, sustain_frames),
+        np.linspace(sustain_level, 0, release_frames),
+    ])
+
+
+def envelope_ms(attack_time, decay_time, sustain_level, release_time, frames, samplerate=SAMPLERATE):
+    assert isinstance(frames, int)
+
+    attack_frames = int(attack_time / 1000 * samplerate)
+    decay_frames = int(decay_time / 1000 * samplerate)
+    release_frames = int(release_time / 1000 * samplerate)
+    padding_frames = frames - attack_frames - decay_frames - release_frames
+
+    attack_frames = np.clip(attack_frames, 0, None)
+    decay_frames = np.clip(decay_frames, 0, None)
+    release_frames = np.clip(release_frames, 0, None)
+    padding_frames = np.clip(padding_frames, 0, None)
+    return np.concatenate([
+        np.linspace(0, 1, attack_frames),
+        np.linspace(1, sustain_level, decay_frames),
         np.linspace(sustain_level, 0, release_frames),
         np.linspace(0, 0, padding_frames)
     ])[:frames]
@@ -68,6 +72,7 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     wave = sine_wave(duration, 0, 0)
     for fm, am in harmonics:
         wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
+    
     env = envelope(0.1, 0.2, 0.6, 0.2, len(wave))
     wave *= env
     return wave
@@ -148,7 +153,7 @@ def play_kick(duration, samplerate=SAMPLERATE):
         some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
         noise = some_noise[:frames]
         wave += noise
-    return wave * envelope(20, 25, 0.15, 175, frames, msecs=True)
+    return wave * envelope_ms(20, 25, 0.15, 175, frames)
 
 
 @lru_cache()
