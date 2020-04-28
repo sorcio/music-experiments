@@ -76,7 +76,7 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     atk = 15
     dcy = 20
     sus = 0.6
-    rel = np.clip(len(wave) / samplerate * 1000 - (atk + dcy), 0, None)
+    rel = len(wave) / samplerate * 1000 - (atk + dcy)
     #return wave * envelope(0.1, 0.2, 0.6, 0.2, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
