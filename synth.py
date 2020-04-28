@@ -84,6 +84,21 @@ def lowpass_noise(cutoff, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
+def bandpass_noise(cutoffl, cutoffh, duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    print('generating some noise frames', frames)
+    noise = np.random.normal(0, 0.2, frames)
+    print('fft...')
+    fd_noise = np.fft.rfft(noise)
+    freq = np.fft.rfftfreq(noise.size, d=1/samplerate)
+    fd_noise[freq < cutoffl] = 0
+    fd_noise[freq > cutoffh] = 0
+    noise = np.fft.irfft(fd_noise)
+    print('got some noise')
+    return noise
+
+
+@lru_cache()
 def play_drum(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     some_noise = 48 * lowpass_noise(1000, 10.0, samplerate)
@@ -103,6 +118,27 @@ def play_drum2(duration, samplerate=SAMPLERATE):
     wave += noise
 
     env = envelope(0.1, 0.1, 1, 0.7, frames)
+    wave *= env
+    return wave
+
+
+@lru_cache()
+def play_kick(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
+
+    bp_noise = [
+        (0.35, [300, 750]),
+        (0.45, [1700, 8000]),
+        (0.15, [8000, 11500])
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        noise = some_noise[:frames]
+        wave += noise
+
+    env = envelope(0.08, 0.1, 0.15, 0.7, frames)
     wave *= env
     return wave
 
