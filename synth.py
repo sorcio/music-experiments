@@ -17,18 +17,29 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
     return (0.5 * ampl) * np.sin(x * frequency * np.pi * 2)
 
 
-def envelope(attack_time, decay_time, sustain_level, release_time, frames):
+def envelope(attack_time, decay_time, sustain_level, release_time, frames, samplerate=SAMPLERATE, msecs=False):
     assert isinstance(frames, int)
-    attack_frames = int(frames * attack_time)
-    decay_frames = int(frames * decay_time)
-    release_frames = int(frames * release_time)
-    sustain_frames = frames - attack_frames - decay_frames - release_frames
+
+    if msecs is True:
+        attack_frames = np.clip(int(attack_time / 1000 * samplerate), 0, None)
+        decay_frames = np.clip(int(decay_time / 1000 * samplerate), 0, None)
+        release_frames = np.clip(int(release_time / 1000 * samplerate), 0, None)
+        sustain_frames = 0
+        padding_frames = np.clip(frames - attack_frames - decay_frames - release_frames, 0, None)
+    else:
+        attack_frames = int(frames * attack_time)
+        decay_frames = int(frames * decay_time)
+        release_frames = int(frames * release_time)
+        sustain_frames = frames - attack_frames - decay_frames - release_frames
+        padding_frames = 0
+
     return np.concatenate([
         np.linspace(0, 1, attack_frames),
         np.linspace(1, sustain_level, decay_frames),
         np.linspace(sustain_level, sustain_level, sustain_frames),
         np.linspace(sustain_level, 0, release_frames),
-    ])
+        np.linspace(0, 0, padding_frames)
+    ])[:frames]
 
 
 @lru_cache()
