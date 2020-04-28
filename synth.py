@@ -19,6 +19,7 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
 
 def envelope(attack_time, decay_time, sustain_level, release_time, frames):
     assert isinstance(frames, int)
+
     attack_frames = int(frames * attack_time)
     decay_frames = int(frames * decay_time)
     release_frames = int(frames * release_time)
@@ -29,6 +30,26 @@ def envelope(attack_time, decay_time, sustain_level, release_time, frames):
         np.linspace(sustain_level, sustain_level, sustain_frames),
         np.linspace(sustain_level, 0, release_frames),
     ])
+
+
+def envelope_ms(attack_time, decay_time, sustain_level, release_time, frames, samplerate=SAMPLERATE):
+    assert isinstance(frames, int)
+
+    attack_frames = int(attack_time / 1000 * samplerate)
+    decay_frames = int(decay_time / 1000 * samplerate)
+    release_frames = int(release_time / 1000 * samplerate)
+    padding_frames = frames - attack_frames - decay_frames - release_frames
+
+    attack_frames = np.clip(attack_frames, 0, None)
+    decay_frames = np.clip(decay_frames, 0, None)
+    release_frames = np.clip(release_frames, 0, None)
+    padding_frames = np.clip(padding_frames, 0, None)
+    return np.concatenate([
+        np.linspace(0, 1, attack_frames),
+        np.linspace(1, sustain_level, decay_frames),
+        np.linspace(sustain_level, 0, release_frames),
+        np.linspace(0, 0, padding_frames)
+    ])[:frames]
 
 
 @lru_cache()
@@ -51,6 +72,7 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     wave = sine_wave(duration, 0, 0)
     for fm, am in harmonics:
         wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
+    
     env = envelope(0.1, 0.2, 0.6, 0.2, len(wave))
     wave *= env
     return wave
@@ -60,7 +82,6 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
 def lowpass_noise(cutoff, duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
 
-    print('generating some noise frames', frames)
     # # low pass filter implementation without fft
     # # len(convolution) = len(signal) + len(kernel) - 1
     # kernel_half_duration = 1
@@ -72,14 +93,24 @@ def lowpass_noise(cutoff, duration, samplerate=SAMPLERATE):
     # kernel = 2 * cutoff * np.sinc(2 * cutoff * t)
 
     noise = np.random.normal(0, 0.2, frames)
-    print('fft...')
     fd_noise = np.fft.rfft(noise)
     freq = np.fft.rfftfreq(noise.size, d=1/samplerate)
     print(len(freq[freq < cutoff]))
     fd_noise[freq > cutoff] = 0
     noise = np.fft.irfft(fd_noise)
     # noise = np.convolve(noise, kernel)
-    print('got some noise')
+    return noise
+
+
+@lru_cache()
+def bandpass_noise(cutoffl, cutoffh, duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    noise = np.random.normal(0, 0.2, frames)
+    fd_noise = np.fft.rfft(noise)
+    freq = np.fft.rfftfreq(noise.size, d=1/samplerate)
+    fd_noise[freq < cutoffl] = 0
+    fd_noise[freq > cutoffh] = 0
+    noise = np.fft.irfft(fd_noise)
     return noise
 
 
@@ -105,6 +136,24 @@ def play_drum2(duration, samplerate=SAMPLERATE):
     env = envelope(0.1, 0.1, 1, 0.7, frames)
     wave *= env
     return wave
+
+
+@lru_cache()
+def play_kick(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
+
+    bp_noise = [
+        (0.35, [300, 750]),
+        (0.45, [1700, 8000]),
+        (0.15, [8000, 11500])
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        noise = some_noise[:frames]
+        wave += noise
+    return wave * envelope_ms(20, 25, 0.15, 175, frames)
 
 
 @lru_cache()
@@ -198,7 +247,7 @@ def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1.0):
 
 class MyBuffer(bytearray):
     def play_wave(self, data):
-        self.extend(np.int16(data * 32767))
+        self.extend(np.int16(np.clip(data, -1, 1) * 32767))
 
 
 def _write_wav_file(filename, sample_rate, stream):

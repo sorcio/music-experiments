@@ -1,6 +1,7 @@
 from synth import (
     play_tone,
     play_drum2,
+    play_kick,
     silence,
 )
 
@@ -13,7 +14,7 @@ def play_sequence(sequence):
 def play_drumbase(beats, duration):
     for x in beats:
         if x:
-            yield play_drum2(duration)
+            yield play_kick(duration)
         else:
             yield silence(duration)
 
