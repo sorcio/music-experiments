@@ -148,10 +148,7 @@ def play_kick(duration, samplerate=SAMPLERATE):
         some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
         noise = some_noise[:frames]
         wave += noise
-
-    env = envelope(20, 25, 0.15, 175, frames, msecs=True)
-    wave *= env
-    return wave
+    return wave * envelope(20, 25, 0.15, 175, frames, msecs=True)
 
 
 @lru_cache()
