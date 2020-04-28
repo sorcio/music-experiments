@@ -149,7 +149,7 @@ def play_kick(duration, samplerate=SAMPLERATE):
         noise = some_noise[:frames]
         wave += noise
 
-    env = envelope(0.08, 0.1, 0.15, 0.7, frames)
+    env = envelope(20, 25, 0.15, 175, frames, msecs=True)
     wave *= env
     return wave
 
