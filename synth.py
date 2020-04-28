@@ -21,18 +21,24 @@ def envelope(attack_time, decay_time, sustain_level, release_time, frames, sampl
     assert isinstance(frames, int)
 
     if msecs is True:
-        attack_frames = np.clip(int(attack_time / 1000 * samplerate), 0, None)
-        decay_frames = np.clip(int(decay_time / 1000 * samplerate), 0, None)
-        release_frames = np.clip(int(release_time / 1000 * samplerate), 0, None)
+        attack_frames = int(attack_time / 1000 * samplerate)
+        decay_frames = int(decay_time / 1000 * samplerate)
+        release_frames = int(release_time / 1000 * samplerate)
         sustain_frames = 0
-        padding_frames = np.clip(frames - attack_frames - decay_frames - release_frames, 0, None)
+        padding_frames = frames - attack_frames - decay_frames - release_frames
     else:
+        # Original behavior
         attack_frames = int(frames * attack_time)
         decay_frames = int(frames * decay_time)
         release_frames = int(frames * release_time)
         sustain_frames = frames - attack_frames - decay_frames - release_frames
         padding_frames = 0
 
+    attack_frames = np.clip(attack_frames, 0, None)
+    decay_frames = np.clip(decay_frames, 0, None)
+    release_frames = np.clip(release_frames, 0, None)
+    sustain_frames = np.clip(sustain_frames, 0, None)
+    padding_frames = np.clip(padding_frames, 0, None)
     return np.concatenate([
         np.linspace(0, 1, attack_frames),
         np.linspace(1, sustain_level, decay_frames),
@@ -71,7 +77,6 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
 def lowpass_noise(cutoff, duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
 
-    print('generating some noise frames', frames)
     # # low pass filter implementation without fft
     # # len(convolution) = len(signal) + len(kernel) - 1
     # kernel_half_duration = 1
@@ -83,29 +88,24 @@ def lowpass_noise(cutoff, duration, samplerate=SAMPLERATE):
     # kernel = 2 * cutoff * np.sinc(2 * cutoff * t)
 
     noise = np.random.normal(0, 0.2, frames)
-    print('fft...')
     fd_noise = np.fft.rfft(noise)
     freq = np.fft.rfftfreq(noise.size, d=1/samplerate)
     print(len(freq[freq < cutoff]))
     fd_noise[freq > cutoff] = 0
     noise = np.fft.irfft(fd_noise)
     # noise = np.convolve(noise, kernel)
-    print('got some noise')
     return noise
 
 
 @lru_cache()
 def bandpass_noise(cutoffl, cutoffh, duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
-    print('generating some noise frames', frames)
     noise = np.random.normal(0, 0.2, frames)
-    print('fft...')
     fd_noise = np.fft.rfft(noise)
     freq = np.fft.rfftfreq(noise.size, d=1/samplerate)
     fd_noise[freq < cutoffl] = 0
     fd_noise[freq > cutoffh] = 0
     noise = np.fft.irfft(fd_noise)
-    print('got some noise')
     return noise
 
 
