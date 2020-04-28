@@ -245,7 +245,7 @@ def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1.0):
 
 class MyBuffer(bytearray):
     def play_wave(self, data):
-        self.extend(np.int16(data * 32767))
+        self.extend(np.int16(np.clip(data, -1, 1) * 32767))
 
 
 def _write_wav_file(filename, sample_rate, stream):
