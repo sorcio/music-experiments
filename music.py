@@ -2,7 +2,6 @@ from itertools import cycle, repeat, chain, islice
 
 from synth import (
     play_tone,
-    play_drum2,
     play_kick,
     silence,
 )
@@ -13,10 +12,10 @@ def play_sequence(sequence):
         yield play_tone(freq, duration)
 
 
-def play_drumbase(beats, duration):
+def play_drumbase(beats, duration, drum=play_kick):
     for x in beats:
         if x:
-            yield play_kick(duration)
+            yield drum(duration)
         else:
             yield silence(duration)
 
