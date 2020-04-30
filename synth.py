@@ -121,9 +121,7 @@ def play_drum1(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     some_noise = 48 * lowpass_noise(1000, 10.0, samplerate)
     noise = some_noise[:frames]
-    env = envelope(0.01, 0.1, 0.1, 0.4, frames)
-    wave = env * noise
-    return wave
+    return noise * envelope(0.01, 0.1, 0.1, 0.4, frames)
 
 
 @lru_cache()
@@ -139,8 +137,7 @@ def play_kick(duration, samplerate=SAMPLERATE):
     ]
     for ampl, (freql, freqh) in bp_noise:
         some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
-        noise = some_noise[:frames]
-        wave += noise
+        wave += some_noise[:frames]
 
     # envelope(0.08, 0.1, 0.05, 0.7, frames)
     return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.4
