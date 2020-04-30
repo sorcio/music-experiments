@@ -27,6 +27,8 @@ Tuning/Intervals
 Scales
 ======
 
+* The `Scale Omnibus 
+  <http://www.saxopedia.com/wp-content/uploads/2014/06/The-Scale-Omnibus-1.02.pdf>`_
 * All about musical scales - A complete guide:
   https://www.youtube.com/watch?v=Vq2xt2D3e3E
 
