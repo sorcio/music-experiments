@@ -28,7 +28,7 @@ def drumify(rythm):
 
 def make_music(synth):
     MUL = 2
-    scale = Scale('E', 'melodic minor')
+    scale = Scale('C', 'melodic minor')
     H, M, L = 10, 3, 1
     weights = [
         [H,L,H,L,H,L,M,H], # Cm

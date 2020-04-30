@@ -35,8 +35,8 @@ names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
 names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
 notes = {}
 
-for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat),
-                        chain.from_iterable(repeat(o, 12) for o in range(8))):
+octaves = chain.from_iterable(repeat(o, 12) for o in range(8))
+for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat), octaves):
     notes[f'{ns}{o}'] = notes[f'{nf}{o}'] = t
 
 
@@ -110,10 +110,10 @@ class Scale:
         scale_intervals = intervals[scale]
         self.intervals = list(islice(cycle(scale_intervals), mode,
                                      mode+len(scale_intervals)))
-        sc = [Note(key)]
+        notes = [Note(key)]
         for i in self.intervals:
-            sc.append(sc[-1].next_note(i))
-        self.notes = [n for n in sc]
+            notes.append(notes[-1].next_note(i))
+        self.notes = notes
     #def __init__(self, key, scale, mode):
         #self.key, self.scale, self.mode = key, scale, mode
         #mode -= 1  # start from 0
@@ -130,8 +130,9 @@ class Scale:
             #self.notes = [flats[key_offset+k] for k in accumulate(offsets)]
     def __repr__(self):
         modes = {1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII'}
+        notes = " ".join(map(str, self.notes))
         return (f'<Scale key={self.key!r} scale={self.scale!r} '
-                f'mode={modes[self.mode]!r} notes={" ".join(self.notes)!r}>')
+                f'mode={modes[self.mode]!r} notes={notes!r}>')
     def __str__(self):
         return ' '.join(map(str, self.notes))
     def __iter__(self):
