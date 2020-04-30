@@ -72,7 +72,6 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     wave = sine_wave(duration, 0, 0)
     for fm, am in harmonics:
         wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
-    
     atk = 15
     dcy = 20
     sus = 0.6
@@ -118,7 +117,7 @@ def bandpass_noise(cutoffl, cutoffh, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_drum(duration, samplerate=SAMPLERATE):
+def play_drum1(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     some_noise = 48 * lowpass_noise(1000, 10.0, samplerate)
     noise = some_noise[:frames]
@@ -126,20 +125,45 @@ def play_drum(duration, samplerate=SAMPLERATE):
     wave = env * noise
     return wave
 
-
 @lru_cache()
 def play_drum2(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
-    wave = 0.2 * np.sign(sine_wave(duration, 20, 1, samplerate))
+    wave = 0.5 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.5 * sine_wave(duration, 90, 1, samplerate)
 
-    some_noise = lowpass_noise(4000, 10.0, samplerate)
+    some_noise = 0.4 * bandpass_noise(300, 750, 10.0, samplerate)
     noise = some_noise[:frames]
     wave += noise
 
-    env = envelope(0.1, 0.1, 1, 0.7, frames)
+    some_noise = 0.5 * bandpass_noise(1700, 4500, 10.0, samplerate)
+    noise = some_noise[:frames]
+    wave += noise
+
+    env = envelope(0.1, 0.1, 0.05, 0.7, frames)
     wave *= env
     return wave
 
+@lru_cache()
+def play_drum3(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
+
+    some_noise = 0.35 * bandpass_noise(300, 750, duration+.1, samplerate)
+    noise = some_noise[:frames]
+    wave += noise
+
+    some_noise = 0.45 * bandpass_noise(1700, 8000, duration+.1, samplerate)
+    noise = some_noise[:frames]
+    wave += noise
+
+    some_noise = 0.15 * bandpass_noise(8000, 11500, duration+.1, samplerate)
+    noise = some_noise[:frames]
+    wave += noise
+
+    env = envelope(0.08, 0.1, 0.05, 0.7, frames)
+    wave *= env
+    return wave
 
 @lru_cache()
 def play_kick(duration, samplerate=SAMPLERATE):
