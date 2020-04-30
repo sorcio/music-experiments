@@ -121,49 +121,8 @@ def play_drum1(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     some_noise = 48 * lowpass_noise(1000, 10.0, samplerate)
     noise = some_noise[:frames]
-    env = envelope(0.01, 0.1, 0.1, 0.4, frames)
-    wave = env * noise
-    return wave
+    return noise * envelope(0.01, 0.1, 0.1, 0.4, frames)
 
-@lru_cache()
-def play_drum2(duration, samplerate=SAMPLERATE):
-    frames = int(duration*samplerate)
-    wave = 0.5 * sine_wave(duration, 60, 1, samplerate)
-    wave += 0.5 * sine_wave(duration, 90, 1, samplerate)
-
-    some_noise = 0.4 * bandpass_noise(300, 750, 10.0, samplerate)
-    noise = some_noise[:frames]
-    wave += noise
-
-    some_noise = 0.5 * bandpass_noise(1700, 4500, 10.0, samplerate)
-    noise = some_noise[:frames]
-    wave += noise
-
-    env = envelope(0.1, 0.1, 0.05, 0.7, frames)
-    wave *= env
-    return wave
-
-@lru_cache()
-def play_drum3(duration, samplerate=SAMPLERATE):
-    frames = int(duration*samplerate)
-    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
-    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
-
-    some_noise = 0.35 * bandpass_noise(300, 750, duration+.1, samplerate)
-    noise = some_noise[:frames]
-    wave += noise
-
-    some_noise = 0.45 * bandpass_noise(1700, 8000, duration+.1, samplerate)
-    noise = some_noise[:frames]
-    wave += noise
-
-    some_noise = 0.15 * bandpass_noise(8000, 11500, duration+.1, samplerate)
-    noise = some_noise[:frames]
-    wave += noise
-
-    env = envelope(0.08, 0.1, 0.05, 0.7, frames)
-    wave *= env
-    return wave
 
 @lru_cache()
 def play_kick(duration, samplerate=SAMPLERATE):
@@ -172,15 +131,61 @@ def play_kick(duration, samplerate=SAMPLERATE):
     wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
 
     bp_noise = [
-        (0.35, [300, 750]),
+        (0.4, [300, 750]),
         (0.45, [1700, 8000]),
         (0.15, [8000, 11500])
     ]
     for ampl, (freql, freqh) in bp_noise:
         some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
-        noise = some_noise[:frames]
-        wave += noise
-    return wave * envelope_ms(20, 25, 0.15, 175, frames)
+        wave += some_noise[:frames]
+
+    # envelope(0.08, 0.1, 0.05, 0.7, frames)
+    return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.4
+
+
+@lru_cache()
+def play_snare(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    top_wave = 0.15 * sine_wave(duration, 120, 1, samplerate)
+    top_wave += 0.35 * sine_wave(duration, 160, 1, samplerate)
+    atk = 3
+    dcy = 25
+    sus = 0.2
+    top_wave *= envelope_ms(atk, dcy, sus, 100, frames)
+
+    btm_wave = sine_wave(duration, 0, 1, samplerate)
+    bp_noise = [
+        (0.25, [300, 800]),
+        (0.15, [1200, 2400]),
+        (0.20, [4000, 8000]),
+        (0.15, [8000, 12000]),
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        btm_wave += some_noise[:frames]
+
+    sus = 0.45
+    rel = len(btm_wave) / samplerate * 1000 - (atk + dcy)
+    btm_wave *= envelope_ms(atk, dcy, sus, min(200, rel), frames)
+
+    return (top_wave + btm_wave) * 2.3
+
+
+@lru_cache()
+def play_hh(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = sine_wave(duration, 0, 1, samplerate)
+
+    bp_noise = [
+        (0.3, [200, 500]),
+        (0.4, [2000, 4500]),
+        (0.5, [6000, 16000])
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        wave += some_noise[:frames]
+
+    return wave * envelope_ms(10, 30, 0.05, 50, frames) * 0.5
 
 
 @lru_cache()

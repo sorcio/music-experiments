@@ -2,7 +2,7 @@ import random
 from itertools import cycle
 
 from music import tone, play_sequence, play_drumbase, Scale
-from synth import play_drum2, play_drum3, play_kick
+from synth import play_kick, play_snare, play_hh
 
 def gen_rythm2(beats, prob=0.9):
     if beats == 1:
@@ -70,9 +70,9 @@ def make_music(synth):
         pattern = random.choice([[1,0,0,0], [1,0,1,0], [0,1,0,1]])
         drums = [
             play_drumbase(drumify(rythm*MUL), BASE, play_kick),
-            play_drumbase([1]*beat_duration*2, BASE, play_drum3),
+            play_drumbase([1]*beat_duration*2, BASE, play_hh),
             #play_drumbase([0,1]*(beat_duration//1), BASE, play_drum3),
-            play_drumbase(pattern*(beat_duration//2), BASE, play_drum2),
+            play_drumbase(pattern*(beat_duration//2), BASE, play_snare),
         ]
         sequences = [sequence, sequence2, sequence3, sequence4]
         synth.play_mix([*drums, *map(play_sequence, sequences)])
