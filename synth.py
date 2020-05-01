@@ -79,7 +79,7 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     atk = 15
     dcy = 20
     sus = 0.6
-    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(wave))
     #return wave * envelope(0.1, 0.2, 0.6, 0.2, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
@@ -101,7 +101,7 @@ def play_banjo(freq, duration, samplerate=SAMPLERATE):
     atk = 0
     dcy = 1
     sus = 0.9
-    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
@@ -132,7 +132,7 @@ def play_metallic_ufo(freq, duration, samplerate=SAMPLERATE):
     atk = 1
     dcy = 1
     sus = 0.8
-    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
@@ -240,7 +240,7 @@ def play_snare(duration, samplerate=SAMPLERATE):
         btm_wave += some_noise[:frames]
 
     sus = 0.45
-    rel = len(btm_wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(btm_wave))
     btm_wave *= envelope_ms(atk, dcy, sus, min(200, rel), frames)
 
     return (top_wave + btm_wave) * 2.3
@@ -288,7 +288,7 @@ def play_bass(freq, duration, samplerate=SAMPLERATE):
     # atk = 10
     # dcy = 15
     # sus = 0.1
-    # rel = len(pick_wave) / samplerate * 1000 - (atk + dcy)
+    # rel = release_time(atk, dcy, len(pick_wave))
     # pick_wave *= envelope_ms(atk, dcy, sus, rel, len(pick_wave))
 
     return bass_wave # + pick_wave
