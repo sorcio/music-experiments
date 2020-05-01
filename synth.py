@@ -17,6 +17,10 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
     return (0.5 * ampl) * np.sin(x * frequency * np.pi * 2)
 
 
+def release_time(atk, dcy, samplelen, samplerate=SAMPLERATE):
+    return samplelen / samplerate * 1000 - (atk + dcy)
+
+
 def envelope(attack_time, decay_time, sustain_level, release_time, frames):
     assert isinstance(frames, int)
 
