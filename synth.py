@@ -177,7 +177,7 @@ def play_drum1(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_kick(duration, samplerate=SAMPLERATE):
+def play_kick_hard(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
     wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
@@ -193,6 +193,25 @@ def play_kick(duration, samplerate=SAMPLERATE):
 
     # envelope(0.08, 0.1, 0.05, 0.7, frames)
     return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.4
+
+
+@lru_cache()
+def play_kick(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
+
+    bp_noise = [
+        (0.5, [300, 750]),
+        (0.20, [1700, 8000]),
+        (0.05, [8000, 11500])
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        wave += some_noise[:frames]
+
+    # envelope(0.08, 0.1, 0.05, 0.7, frames)
+    return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.6
 
 
 @lru_cache()
