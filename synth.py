@@ -86,7 +86,7 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
 
 @lru_cache()
 def play_banjo(freq, duration, samplerate=SAMPLERATE):
-    ampl = 0.5
+    ampl = 0.38
     harmonics = [
         # (freqmult, amplmult)
         (1.0, 0.5),
