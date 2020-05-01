@@ -23,11 +23,15 @@ Tuning/Intervals
   * therefore, the equal temperament is now commonly used in Western music
 
 * Mathematics of musical notes: https://www.youtube.com/watch?v=Q-0wBlkjGQo
+* `Size of intervals used in different tuning systems
+  <https://en.wikipedia.org/wiki/Interval_(music)#Size_of_intervals_used_in_different_tuning_systems>`_
+* `List of meantone intervals <https://en.wikipedia.org/wiki/List_of_meantone_intervals>`_
+* `List of pitch intervals <https://en.wikipedia.org/wiki/List_of_pitch_intervals#List>`_
 
 Scales
 ======
 
-* The `Scale Omnibus 
+* The `Scale Omnibus
   <http://www.saxopedia.com/wp-content/uploads/2014/06/The-Scale-Omnibus-1.02.pdf>`_
 * All about musical scales - A complete guide:
   https://www.youtube.com/watch?v=Vq2xt2D3e3E
