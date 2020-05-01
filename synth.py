@@ -260,6 +260,37 @@ def play_hh(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
+def play_bass(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.5
+    bass_wave = sine_wave(duration, 0, 1)
+    harmonics = [
+        (0.125, 0.5),
+        (0.25, 0.3),
+        (0.5, 0.03),
+        (1.0, 0.01)
+    ]
+    for fm, am in harmonics:
+        bass_wave += sine_wave(duration, freq * fm, ampl * am)
+
+    atk = 10
+    dcy = 0
+    sus = 1
+    rel = release_time(atk, dcy, len(bass_wave))
+    bass_wave *= envelope_ms(atk, dcy, sus, rel, len(bass_wave))
+
+    # pick_wave = sine_wave(duration, freq, ampl * 0.01)
+    # pick_wave += sine_wave(duration, freq * 2, ampl * 0.005)
+
+    # atk = 10
+    # dcy = 15
+    # sus = 0.1
+    # rel = len(pick_wave) / samplerate * 1000 - (atk + dcy)
+    # pick_wave *= envelope_ms(atk, dcy, sus, rel, len(pick_wave))
+
+    return bass_wave # + pick_wave
+
+
+@lru_cache()
 def silence(duration, samplerate=SAMPLERATE):
     return np.zeros(int(duration*samplerate))
 
