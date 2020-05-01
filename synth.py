@@ -17,6 +17,10 @@ def sine_wave(duration, frequency, ampl=1.0, samplerate=SAMPLERATE):
     return (0.5 * ampl) * np.sin(x * frequency * np.pi * 2)
 
 
+def release_time(atk, dcy, samplelen, samplerate=SAMPLERATE):
+    return samplelen / samplerate * 1000 - (atk + dcy)
+
+
 def envelope(attack_time, decay_time, sustain_level, release_time, frames):
     assert isinstance(frames, int)
 
@@ -75,14 +79,14 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
     atk = 15
     dcy = 20
     sus = 0.6
-    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(wave))
     #return wave * envelope(0.1, 0.2, 0.6, 0.2, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
 @lru_cache()
 def play_banjo(freq, duration, samplerate=SAMPLERATE):
-    ampl = 0.5
+    ampl = 0.38
     harmonics = [
         # (freqmult, amplmult)
         (1.0, 0.5),
@@ -97,7 +101,7 @@ def play_banjo(freq, duration, samplerate=SAMPLERATE):
     atk = 0
     dcy = 1
     sus = 0.9
-    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
@@ -128,7 +132,7 @@ def play_metallic_ufo(freq, duration, samplerate=SAMPLERATE):
     atk = 1
     dcy = 1
     sus = 0.8
-    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
@@ -177,7 +181,7 @@ def play_drum1(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_kick(duration, samplerate=SAMPLERATE):
+def play_kick_hard(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
     wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
@@ -193,6 +197,25 @@ def play_kick(duration, samplerate=SAMPLERATE):
 
     # envelope(0.08, 0.1, 0.05, 0.7, frames)
     return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.4
+
+
+@lru_cache()
+def play_kick(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
+
+    bp_noise = [
+        (0.5, [300, 750]),
+        (0.20, [1700, 8000]),
+        (0.05, [8000, 11500])
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        wave += some_noise[:frames]
+
+    # envelope(0.08, 0.1, 0.05, 0.7, frames)
+    return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.6
 
 
 @lru_cache()
@@ -217,7 +240,7 @@ def play_snare(duration, samplerate=SAMPLERATE):
         btm_wave += some_noise[:frames]
 
     sus = 0.45
-    rel = len(btm_wave) / samplerate * 1000 - (atk + dcy)
+    rel = release_time(atk, dcy, len(btm_wave))
     btm_wave *= envelope_ms(atk, dcy, sus, min(200, rel), frames)
 
     return (top_wave + btm_wave) * 2.3
@@ -241,6 +264,37 @@ def play_hh(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
+def play_bass(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.5
+    bass_wave = sine_wave(duration, 0, 1)
+    harmonics = [
+        (0.125, 0.5),
+        (0.25, 0.3),
+        (0.5, 0.03),
+        (1.0, 0.01)
+    ]
+    for fm, am in harmonics:
+        bass_wave += sine_wave(duration, freq * fm, ampl * am)
+
+    atk = 10
+    dcy = 0
+    sus = 1
+    rel = release_time(atk, dcy, len(bass_wave))
+    bass_wave *= envelope_ms(atk, dcy, sus, rel, len(bass_wave))
+
+    # pick_wave = sine_wave(duration, freq, ampl * 0.01)
+    # pick_wave += sine_wave(duration, freq * 2, ampl * 0.005)
+
+    # atk = 10
+    # dcy = 15
+    # sus = 0.1
+    # rel = release_time(atk, dcy, len(pick_wave))
+    # pick_wave *= envelope_ms(atk, dcy, sus, rel, len(pick_wave))
+
+    return bass_wave # + pick_wave
+
+
+@lru_cache()
 def silence(duration, samplerate=SAMPLERATE):
     return np.zeros(int(duration*samplerate))
 
@@ -253,8 +307,13 @@ class Synth:
         self.play_mix(args)
 
     def play_mix(self, mix):
-        wave = sum(np.concatenate(list(map(list, waves))) for waves in mix)
-        self.output.play_wave(wave)
+        concatenated = [np.concatenate(list(map(list, waves))) for waves in mix]
+        longest = len(max(concatenated, key=lambda x: len(x)))
+        for idx, ary in enumerate(concatenated):
+            zeros = np.zeros([longest-len(ary)])
+            concatenated[idx] = np.block([ary, zeros])
+
+        self.output.play_wave(sum(concatenated))
 
     def play_wave(self, wave):
         self.output.play_wave(wave)

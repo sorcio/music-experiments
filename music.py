@@ -7,9 +7,9 @@ from synth import (
 )
 
 
-def play_sequence(sequence):
+def play_sequence(sequence, instrument=play_tone):
     for freq, duration in sequence:
-        yield play_tone(freq, duration)
+        yield instrument(freq, duration)
 
 
 def play_drumbase(beats, duration, drum=play_kick):
