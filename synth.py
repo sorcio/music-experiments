@@ -81,6 +81,58 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
+def play_banjo(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.5
+    harmonics = [
+        # (freqmult, amplmult)
+        (1.0, 0.5),
+        (1.25, 0.2),  # major third
+        (1.5, 0.3),   # perfect fifth
+        (0.75, 0.2),  # perfect fifth
+        (0.25, 0.3),  # octave
+    ]
+    wave = sine_wave(duration, 0, 0)
+    for fm, am in harmonics:
+        wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
+    atk = 0
+    dcy = 1
+    sus = 0.9
+    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
+
+
+@lru_cache()
+def play_metallic_ufo(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.5
+    harmonics = [
+        # (freqmult, amplmult)
+        (1.0, 0.7),
+        # minor sevenths
+        (1.8, 0.2),
+        (0.9, 0.3),
+        # thirds
+        (2.5, 0.1),
+        (1.25, 0.4),
+        (0.625, 0.5),
+        # perfect fifths
+        (1.5, 0.1),
+        (0.75, 0.2),
+        # octaves
+        (0.5, 0.15),
+        (0.25, 0.15),
+        (0.125, 0.15),
+    ]
+    wave = sine_wave(duration, 0, 0)
+    for fm, am in harmonics:
+        wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
+    atk = 1
+    dcy = 1
+    sus = 0.8
+    rel = len(wave) / samplerate * 1000 - (atk + dcy)
+    return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
+
+
+@lru_cache()
 def lowpass_noise(cutoff, duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
 
