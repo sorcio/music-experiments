@@ -307,8 +307,13 @@ class Synth:
         self.play_mix(args)
 
     def play_mix(self, mix):
-        wave = sum(np.concatenate(list(map(list, waves))) for waves in mix)
-        self.output.play_wave(wave)
+        concatenated = [np.concatenate(list(map(list, waves))) for waves in mix]
+        longest = len(max(concatenated, key=lambda x: len(x)))
+        for idx, ary in enumerate(concatenated):
+            zeros = np.zeros([longest-len(ary)])
+            concatenated[idx] = np.block([ary, zeros])
+
+        self.output.play_wave(sum(concatenated))
 
     def play_wave(self, wave):
         self.output.play_wave(wave)
