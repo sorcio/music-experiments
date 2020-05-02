@@ -7,6 +7,11 @@ from synth import (SAMPLERATE, sine_wave, envelope_ms, release_time,
 
 
 @lru_cache()
+def silence(duration, samplerate=SAMPLERATE):
+    return np.zeros(int(duration*samplerate))
+
+
+@lru_cache()
 def default_tone(freq, duration, samplerate=SAMPLERATE):
     # # high freq att:
     # # 0.0 : 0.99 = 110 : 880
@@ -31,6 +36,60 @@ def default_tone(freq, duration, samplerate=SAMPLERATE):
     sus = 0.6
     rel = release_time(atk, dcy, len(wave))
     #return wave * envelope(0.1, 0.2, 0.6, 0.2, len(wave))
+    return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
+
+
+@lru_cache()
+def bass(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.5
+    bass_wave = sine_wave(duration, 0, 1)
+    harmonics = [
+        (0.125, 0.5),
+        (0.25, 0.3),
+        (0.5, 0.03),
+        (1.0, 0.01)
+    ]
+    for fm, am in harmonics:
+        bass_wave += sine_wave(duration, freq * fm, ampl * am)
+
+    atk = 10
+    dcy = 0
+    sus = 1
+    rel = release_time(atk, dcy, len(bass_wave))
+    bass_wave *= envelope_ms(atk, dcy, sus, rel, len(bass_wave))
+
+    # pick_wave = sine_wave(duration, freq, ampl * 0.01)
+    # pick_wave += sine_wave(duration, freq * 2, ampl * 0.005)
+
+    # atk = 10
+    # dcy = 15
+    # sus = 0.1
+    # rel = release_time(atk, dcy, len(pick_wave))
+    # pick_wave *= envelope_ms(atk, dcy, sus, rel, len(pick_wave))
+
+    return bass_wave # + pick_wave
+
+
+@lru_cache()
+def violin(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.3
+    harmonics = [
+        # (freqmult, amplmult)
+        (4, 0.05),    # octave
+        (2, 0.4),     # octave
+        (1.5, 0.3),   # perfect fifth
+        (1.0, 0.6),
+        (0.75, 0.3),  # perfect fifth
+        (0.5, 0.3),   # octave
+        (1.25, 0.1),  # octave
+    ]
+    wave = sine_wave(duration, 0, 0)
+    for fm, am in harmonics:
+        wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
+    atk = 120
+    dcy = 30
+    sus = 0.8
+    rel = release_time(atk, dcy, len(wave))
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
@@ -86,28 +145,8 @@ def metallic_ufo(freq, duration, samplerate=SAMPLERATE):
     return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
 
-@lru_cache()
-def violin(freq, duration, samplerate=SAMPLERATE):
-    ampl = 0.3
-    harmonics = [
-        # (freqmult, amplmult)
-        (4, 0.05),    # octave
-        (2, 0.4),     # octave
-        (1.5, 0.3),   # perfect fifth
-        (1.0, 0.6),
-        (0.75, 0.3),  # perfect fifth
-        (0.5, 0.3),   # octave
-        (1.25, 0.1),  # octave
-    ]
-    wave = sine_wave(duration, 0, 0)
-    for fm, am in harmonics:
-        wave += sine_wave(duration, freq * fm, ampl * am, samplerate)
-    atk = 120
-    dcy = 30
-    sus = 0.8
-    rel = release_time(atk, dcy, len(wave))
-    return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
 
+# Drums
 
 @lru_cache()
 def drum1(duration, samplerate=SAMPLERATE):
@@ -115,25 +154,6 @@ def drum1(duration, samplerate=SAMPLERATE):
     some_noise = 48 * lowpass_noise(1000, 10.0, samplerate)
     noise = some_noise[:frames]
     return noise * envelope(0.01, 0.1, 0.1, 0.4, frames)
-
-
-@lru_cache()
-def kick_hard(duration, samplerate=SAMPLERATE):
-    frames = int(duration*samplerate)
-    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
-    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
-
-    bp_noise = [
-        (0.4, [300, 750]),
-        (0.45, [1700, 8000]),
-        (0.15, [8000, 11500])
-    ]
-    for ampl, (freql, freqh) in bp_noise:
-        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
-        wave += some_noise[:frames]
-
-    # envelope(0.08, 0.1, 0.05, 0.7, frames)
-    return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.4
 
 
 @lru_cache()
@@ -153,6 +173,25 @@ def kick(duration, samplerate=SAMPLERATE):
 
     # envelope(0.08, 0.1, 0.05, 0.7, frames)
     return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.6
+
+
+@lru_cache()
+def kick_hard(duration, samplerate=SAMPLERATE):
+    frames = int(duration*samplerate)
+    wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
+    wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
+
+    bp_noise = [
+        (0.4, [300, 750]),
+        (0.45, [1700, 8000]),
+        (0.15, [8000, 11500])
+    ]
+    for ampl, (freql, freqh) in bp_noise:
+        some_noise = ampl * bandpass_noise(freql, freqh, duration+.1, samplerate)
+        wave += some_noise[:frames]
+
+    # envelope(0.08, 0.1, 0.05, 0.7, frames)
+    return wave * envelope_ms(10, 20, 0.05, 175, frames) * 1.4
 
 
 @lru_cache()
@@ -198,39 +237,3 @@ def hh(duration, samplerate=SAMPLERATE):
         wave += some_noise[:frames]
 
     return wave * envelope_ms(10, 30, 0.05, 50, frames) * 0.5
-
-
-@lru_cache()
-def bass(freq, duration, samplerate=SAMPLERATE):
-    ampl = 0.5
-    bass_wave = sine_wave(duration, 0, 1)
-    harmonics = [
-        (0.125, 0.5),
-        (0.25, 0.3),
-        (0.5, 0.03),
-        (1.0, 0.01)
-    ]
-    for fm, am in harmonics:
-        bass_wave += sine_wave(duration, freq * fm, ampl * am)
-
-    atk = 10
-    dcy = 0
-    sus = 1
-    rel = release_time(atk, dcy, len(bass_wave))
-    bass_wave *= envelope_ms(atk, dcy, sus, rel, len(bass_wave))
-
-    # pick_wave = sine_wave(duration, freq, ampl * 0.01)
-    # pick_wave += sine_wave(duration, freq * 2, ampl * 0.005)
-
-    # atk = 10
-    # dcy = 15
-    # sus = 0.1
-    # rel = release_time(atk, dcy, len(pick_wave))
-    # pick_wave *= envelope_ms(atk, dcy, sus, rel, len(pick_wave))
-
-    return bass_wave # + pick_wave
-
-
-@lru_cache()
-def silence(duration, samplerate=SAMPLERATE):
-    return np.zeros(int(duration*samplerate))
