@@ -4,7 +4,7 @@ import itertools
 from music import tone, play_sequence
 
 
-def gen_rythm(beats):
+def gen_rhythm(beats):
     while True:
         res = random.choices([1,2,4,8], (32,8,2,1),
                              k=random.choice([4,8,16,32]))
@@ -12,11 +12,11 @@ def gen_rythm(beats):
             return res
 
 
-def gen_rythm2(beats):
+def gen_rhythm2(beats):
     if beats == 1:
         return [1]
     if random.random() < 0.9:
-        return [*gen_rythm2(int(beats/2)), *gen_rythm2(int(beats/2))]
+        return [*gen_rhythm2(int(beats/2)), *gen_rhythm2(int(beats/2))]
     else:
         return [beats]
 
@@ -34,7 +34,7 @@ def make_music(synth):
         BASE = 60 / TEMPO
         bass_scale = [x / 4 for x in scale]
         beat_duration = random.choice([4,8,16,32])
-        durations = [BASE*d for d in gen_rythm2(beat_duration)]
+        durations = [BASE*d for d in gen_rhythm2(beat_duration)]
         hdlen = len(durations)
         notes = [*random.choices(scale, (5,5,3,1,1), k=hdlen)*2,
                  *random.choices(scale, (1,1,3,5,5), k=hdlen)*2]

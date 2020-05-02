@@ -4,12 +4,12 @@ from itertools import cycle
 from music import tone, play_sequence, play_drumbase, Scale
 from instruments import kick, snare, hh
 
-def gen_rythm2(beats, prob=0.9):
+def gen_rhythm2(beats, prob=0.9):
     if beats == 1:
         return [1]
     if random.random() < prob:
         prob = max(prob-.2, .1)
-        return [*gen_rythm2(int(beats/2), prob), *gen_rythm2(int(beats/2), prob)]
+        return [*gen_rhythm2(int(beats/2), prob), *gen_rhythm2(int(beats/2), prob)]
     else:
         return [beats]
 
@@ -19,9 +19,9 @@ def drill(notes):
 def drill_pattern(notes, pattern):
     return [note*p for p, note in zip(cycle(pattern), notes)]
 
-def drumify(rythm):
+def drumify(rhythm):
     beats = []
-    for d in rythm:
+    for d in rhythm:
         beats.append(1)
         beats.extend([0]*(d-1))
     return beats
@@ -50,13 +50,13 @@ def make_music(synth):
         #TEMPO = 600
         BASE = 60 / TEMPO
         beat_duration = random.choice([8,16])
-        rythm = gen_rythm2(beat_duration)
-        durations = [BASE*d for d in rythm]
+        rhythm = gen_rhythm2(beat_duration)
+        durations = [BASE*d for d in rhythm]
         hdlen = len(durations)
         notes = [*random.choices(scale1, weight, k=hdlen),
                  *random.choices(scale1, weight, k=hdlen)] * (MUL//2)
         durations *= MUL
-        print(TEMPO, beat_duration, rythm*MUL)
+        print(TEMPO, beat_duration, rhythm*MUL)
         assert len(durations) == len(notes), (len(durations), len(notes))
         #drums = [play_drum2(d) for d in durations]
         sequence = list(zip(drill(notes), durations))
@@ -69,7 +69,7 @@ def make_music(synth):
 
         pattern = random.choice([[1,0,0,0], [1,0,1,0], [0,1,0,1]])
         drums = [
-            play_drumbase(drumify(rythm*MUL), BASE, kick),
+            play_drumbase(drumify(rhythm*MUL), BASE, kick),
             play_drumbase([1]*beat_duration*2, BASE, hh),
             #play_drumbase([0,1]*(beat_duration//1), BASE, drum3),
             play_drumbase(pattern*(beat_duration//2), BASE, snare),
