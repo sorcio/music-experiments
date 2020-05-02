@@ -7,7 +7,7 @@ from synth import (SAMPLERATE, sine_wave, envelope_ms, release_time,
 
 
 @lru_cache()
-def play_tone(freq, duration, samplerate=SAMPLERATE):
+def default_tone(freq, duration, samplerate=SAMPLERATE):
     # # high freq att:
     # # 0.0 : 0.99 = 110 : 880
     # attenuation = min(max((freq - 110) / 770 * 0.99, 0.0), 0.99)
@@ -35,7 +35,7 @@ def play_tone(freq, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_banjo(freq, duration, samplerate=SAMPLERATE):
+def banjo(freq, duration, samplerate=SAMPLERATE):
     ampl = 0.38
     harmonics = [
         # (freqmult, amplmult)
@@ -56,7 +56,7 @@ def play_banjo(freq, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_metallic_ufo(freq, duration, samplerate=SAMPLERATE):
+def metallic_ufo(freq, duration, samplerate=SAMPLERATE):
     ampl = 0.5
     harmonics = [
         # (freqmult, amplmult)
@@ -87,7 +87,7 @@ def play_metallic_ufo(freq, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_violin(freq, duration, samplerate=SAMPLERATE):
+def violin(freq, duration, samplerate=SAMPLERATE):
     ampl = 0.3
     harmonics = [
         # (freqmult, amplmult)
@@ -110,7 +110,7 @@ def play_violin(freq, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_drum1(duration, samplerate=SAMPLERATE):
+def drum1(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     some_noise = 48 * lowpass_noise(1000, 10.0, samplerate)
     noise = some_noise[:frames]
@@ -118,7 +118,7 @@ def play_drum1(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_kick_hard(duration, samplerate=SAMPLERATE):
+def kick_hard(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
     wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
@@ -137,7 +137,7 @@ def play_kick_hard(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_kick(duration, samplerate=SAMPLERATE):
+def kick(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     wave = 0.6 * sine_wave(duration, 60, 1, samplerate)
     wave += 0.6 * sine_wave(duration, 90, 1, samplerate)
@@ -156,7 +156,7 @@ def play_kick(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_snare(duration, samplerate=SAMPLERATE):
+def snare(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     top_wave = 0.15 * sine_wave(duration, 120, 1, samplerate)
     top_wave += 0.35 * sine_wave(duration, 160, 1, samplerate)
@@ -184,7 +184,7 @@ def play_snare(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_hh(duration, samplerate=SAMPLERATE):
+def hh(duration, samplerate=SAMPLERATE):
     frames = int(duration*samplerate)
     wave = sine_wave(duration, 0, 1, samplerate)
 
@@ -201,7 +201,7 @@ def play_hh(duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
-def play_bass(freq, duration, samplerate=SAMPLERATE):
+def bass(freq, duration, samplerate=SAMPLERATE):
     ampl = 0.5
     bass_wave = sine_wave(duration, 0, 1)
     harmonics = [

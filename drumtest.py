@@ -2,11 +2,11 @@ import random
 from itertools import product
 
 from music import play_drumbase
-from instruments import play_drum1, play_drum2, play_drum3, play_kick
+from instruments import kick, kick_hard, snare, hh
 
 def make_music(synth):
     tempos = [400, 600, 900]
-    drums = [play_drum2, play_drum3, play_kick]
+    drums = [kick, kick_hard, snare, hh]
     for tempo, drum in product(tempos, drums):
         BASE = 60 / tempo
         beats = 16
