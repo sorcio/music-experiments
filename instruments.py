@@ -1,13 +1,9 @@
-from contextlib import contextmanager
-from functools import lru_cache, partial
-import threading
-import wave
+from functools import lru_cache
 
 import numpy as np
-import soundcard as sc
 
-
-SAMPLERATE = 44100  # default sample rate
+from synth import (SAMPLERATE, sine_wave, envelope_ms, release_time,
+                   lowpass_noise, bandpass_noise)
 
 
 @lru_cache()

@@ -2,7 +2,7 @@ import random
 from itertools import product
 
 from music import play_drumbase
-from synth import play_drum1, play_drum2, play_drum3, play_kick
+from instruments import play_drum1, play_drum2, play_drum3, play_kick
 
 def make_music(synth):
     tempos = [400, 600, 900]

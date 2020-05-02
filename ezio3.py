@@ -2,7 +2,7 @@ import random
 from itertools import cycle
 
 from music import tone, play_sequence, play_drumbase, Scale
-from synth import play_kick, play_snare, play_hh
+from instruments import play_kick, play_snare, play_hh
 
 def gen_rythm2(beats, prob=0.9):
     if beats == 1:

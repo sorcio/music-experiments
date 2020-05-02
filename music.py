@@ -1,10 +1,6 @@
 from itertools import cycle, repeat, chain, islice
 
-from synth import (
-    play_tone,
-    play_kick,
-    silence,
-)
+from instruments import play_tone, play_kick, silence
 
 
 def play_sequence(sequence, instrument=play_tone):
