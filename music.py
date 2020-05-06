@@ -59,12 +59,14 @@ next_notes = {
 }
 
 
+
 class Note:
     """A note with a name and no frequency/duration."""
     def __init__(self, note):
         self.note = note.note if isinstance(note, Note) else note
     def __eq__(self, other):
-        return self.note == other.note
+        other_note = other.note if isinstance(other, Note) else other
+        return self.note == other_note
     def __hash__(self):
         return hash(self.note)
     def __repr__(self):
