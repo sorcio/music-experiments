@@ -148,26 +148,15 @@ class Scale:
         for i in self.intervals:
             notes.append(notes[-1].next_note(i))
         self.notes = notes
-    #def __init__(self, key, scale, mode):
-        #self.key, self.scale, self.mode = key, scale, mode
-        #mode -= 1  # start from 0
-        #scale_intervals = intervals[scale]
-        #self.intervals = list(islice(cycle(scale_intervals), mode,
-                                     #mode+len(scale_intervals)))
-        #offsets = [0, *self.intervals]
-        #sharps = names_sharp * 2
-        #flats = names_flat * 2
-        #key_offset = sharps.index(key) if key in sharps else flats.index(key)
-        #self.notes = [sharps[key_offset+k] for k in accumulate(offsets)]
-        #print(self.notes)
-        #if any(note[0] in self.notes for note in self.notes if '#' in note):
-            #self.notes = [flats[key_offset+k] for k in accumulate(offsets)]
+
     def __repr__(self):
         modes = {1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII'}
         notes = " ".join(map(str, self.notes))
         return (f'<Scale key={self.key!r} scale={self.scale!r} '
                 f'mode={modes[self.mode]!r} notes={notes!r}>')
+
     def __str__(self):
         return ' '.join(map(str, self.notes))
+
     def __iter__(self):
         return iter(self.notes)
