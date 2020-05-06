@@ -168,3 +168,16 @@ class Scale:
         return [n for n in notes.values()
                 if n.note in self.notes and start <= n < end]
 
+
+
+note_values = [Fraction(1,2**n)/Fraction(1,2) for n in range(9)]
+note_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D15C, 0x1D165)))))
+rest_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D13A, 0x1D143)))))
+
+# TODO: all these constants have corresponding symbols.
+# The names could be improved and additional constants
+# could be added.  Constants for rests need to be added
+# too.  Different intervals can be created by multiplying
+# and dividing these constants.
+NB, N1, N2, N4, N8, N16, N32, N64, N128 = note_values
+
