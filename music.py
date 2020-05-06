@@ -1,3 +1,7 @@
+import random
+import functools
+
+from fractions import Fraction
 from itertools import cycle, repeat, chain, islice
 
 from instruments import default_tone, kick, silence
@@ -23,17 +27,6 @@ def tone(n, base_freq=440.0):
     # G  Ab A  Bb B  C  Db D  Eb E  F  Gb G  Ab A
     return base_freq * 2 ** (n/12)
 
-
-# This dict maps the name of the notes from C0 (included) to C8 (excluded)
-# to the corresponding frequency (in 12-TET).
-tones = [tone(i) for i in range(-57, 39)]
-names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-notes = {}
-
-octaves = chain.from_iterable(repeat(o, 12) for o in range(8))
-for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat), octaves):
-    notes[f'{ns}{o}'] = notes[f'{nf}{o}'] = t
 
 
 # This dict maps the names of the notes with the name of the
@@ -84,6 +77,49 @@ class Note:
     def get_freq(self, octave):
         """Return the frequency of the note at the given octave."""
         return notes[f'{self.note}{octave}']
+
+# TODO: figure out how to represent and name:
+# 1) notes with just a name (e.g. C, E#, or Ab)
+# 2) notes on a keyboard, with name and octave/freq
+# 3) notes on a keyboard with a duration
+# 4) frequencies without a corresponding note
+# 1 and 2 are currently represented by Note and NoteF
+# but are subject to change in future versions
+
+@functools.total_ordering
+class NoteF(Note):
+    def __init__(self, note, octave=None, freq=None):
+        if octave is not None and freq is not None:
+            self.note, self.octave, self.freq = note, octave, freq
+        else:
+            self.note = note[:-1]
+            self.octave = int(note[-1])
+            self.freq = notes[note].freq
+    def __eq__(self, other):
+        return self.freq == other.freq
+    def __lt__(self, other):
+        return self.freq < other.freq
+    def __str__(self):
+        return f'{self.note}{self.octave}'
+    def __repr__(self):
+        return f'{self.note}{self.octave}({self.freq:.2f})'
+
+
+# This dict maps the name of the notes from C0 (included) to C8 (excluded)
+# to the corresponding frequency (in 12-TET).
+tones = [tone(i) for i in range(-57, 39)]
+names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+notes = {}
+
+octaves = chain.from_iterable(repeat(o, 12) for o in range(8))
+for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat), octaves):
+    #notes[f'{ns}{o}'] = notes[f'{nf}{o}'] = t
+    # TODO: this creates a weird loop with NoteF, figure out a better way
+    notes[f'{ns}{o}'] = NoteF(ns, o, t)
+    notes[f'{nf}{o}'] = NoteF(nf, o, t)
+
+
 
 
 # intervals for some common scales
