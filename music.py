@@ -181,3 +181,120 @@ rest_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D13A, 0x1D143))))
 # and dividing these constants.
 NB, N1, N2, N4, N8, N16, N32, N64, N128 = note_values
 
+
+
+# TODO: figure out how to break down these classes.
+# The current idea is more or less:
+# * Rhythm: represent a list of durations as fractions
+# * Melody: represent a list of notes without duration
+# * Phrase: includes a list of notes and corresponding durations
+# Also need to figure out how to handle generative algos
+# and other operations (e.g. repetition, serialization, etc.)
+class Phrase:
+    def __init__(self, timesig, measures, rhythm=None, notes=None):
+        self.timesig = timesig
+        self.measures = measures
+        self.rhythm = rhythm
+        self.notes = notes
+
+    @classmethod
+    def from_list(cls, timesig, list):
+        notes, rhythm = zip(*list)
+        measures = sum(notes) / timesig
+        return cls(timesig, measures, rhythm, notes)
+
+    @classmethod
+    def from_pattern(cls, timesig, measures, pattern):
+        plen = sum(f for n, f in pattern)
+        list = pattern * int((timesig*measures) / plen)
+        notes, rhythm = zip(*list)
+        return cls(timesig, measures, rhythm, notes)
+
+    def __add__(self, other):
+        if self.timesig != other.timesig:
+            raise ValueError(f'Mismatching time signatures '
+                             f'({self.timesig!s} and {other.timesig!s})')
+        rhythm = self.rhythm+other.rhythm if self.rhythm and other.rhythm else None
+        notes = self.notes+other.notes if self.notes and other.notes else None
+        return Phrase(self.timesig, self.measures+other.measures, rhythm, notes)
+
+    def __mul__(self, value):
+        rhythm = self.rhythm * value if self.rhythm else None
+        notes = self.notes * value if self.notes else None
+        return Phrase(self.timesig, self.measures*value, rhythm, notes)
+
+    def __imul__(self, value):
+        if self.rhythm:
+            self.rhythm *= value
+        if self.notes:
+            self.notes *= value
+        return self
+
+    def to_sequence(self, bpm):
+        durations = (f / (bpm / 240.) for f in self.rhythm)
+        return zip((n.freq for n in self.notes), durations)
+
+
+def gen_rhythm(duration, minnote=N16, maxnote=NB, prob=0.9, decay=0.1):
+    if duration <= minnote:
+        return [duration]
+    if duration >= maxnote or random.random() < prob:
+        prob = max(prob-decay, .1)
+        return [*gen_rhythm(duration/2, minnote, maxnote, prob),
+                *gen_rhythm(duration/2, minnote, maxnote, prob)]
+    else:
+        return [duration]
+
+
+class Rhythm:
+    def __init__(self, timesig, measures, rhythm=None):
+        self.timesig = timesig
+        self.measures = measures
+        self.rhythm = rhythm
+
+    def __add__(self, other):
+        if self.timesig != other.timesig:
+            raise ValueError(f'Mismatching time signatures '
+                             f'({self.timesig!s} and {other.timesig!s}).')
+        rhythm = self.rhythm + other.rhythm
+        return Rhythm(self.timesig, self.measures+other.measures, rhythm)
+
+    def __mul__(self, value):
+        rhythm = self.rhythm * value if self.rhythm else None
+        return Rhythm(self.timesig, self.measures*value, rhythm)
+
+    def __len__(self):
+        return len(self.rhythm)
+
+    def generate(self, minnote=N16, maxnote=NB, prob=0.9, decay=0.1, func=None):
+        # TODO: it might be better to leave generation outside
+        # of the class, and define functions that return a
+        # Rhythm instance instead
+        func = func or gen_rhythm
+        self.rhythm = func(self.timesig*self.measures, minnote=minnote,
+                           maxnote=maxnote, prob=prob, decay=decay)
+        return self
+
+    def pattern(self, pattern):
+        repetitions = (self.timesig * self.measures) / sum(pattern)
+        if repetitions.denominator != 1:
+            raise ValueError('Invalid pattern lenght.')
+        self.rhythm = pattern * repetitions
+        return self
+
+    def add_melody(self, melody):
+        return Phrase(self.timesig, self.measures, self.rhythm, melody)
+
+    def uninotes(self, fastest=None):
+        line, sep = '─', '│'
+        fastest = fastest or min(self.rhythm)
+        total = 0
+        result = ['├─']
+        for f in self.rhythm:
+            result.append(f'{note_symbols[f]:{line}<{int(f/fastest)}}')
+            total += f
+            if total == self.timesig:
+                result.append('─┼─')
+                total = 0
+        result[-1] = '─┤'
+        return ''.join(result)
