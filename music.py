@@ -160,3 +160,11 @@ class Scale:
 
     def __iter__(self):
         return iter(self.notes)
+
+    def range(self, start, end):
+        start, end = NoteF(start), NoteF(end)
+        # TODO: improve error checking/reporting
+        assert start.octave <= end.octave
+        return [n for n in notes.values()
+                if n.note in self.notes and start <= n < end]
+
