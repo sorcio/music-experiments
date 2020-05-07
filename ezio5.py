@@ -3,7 +3,7 @@ import random
 from itertools import chain
 from fractions import Fraction
 
-from music import play_sequence, play_drumbase, Scale, Phrase, Rhythm, NoteF
+from music import play_sequence, play_drumbase, Scale, Melody, Rhythm, NoteF
 from music import NB, N1, N2, N4, N8, N16, N32, N64, N128
 from instruments import kick, snare, hh, bass, violin, banjo, metallic_ufo
 
@@ -47,16 +47,16 @@ def make_music(synth):
         melody_rhythm1 = Rhythm(TS, MS//4).generate(N16, N4) * 2
         melody_rhythm2 = Rhythm(TS, MS//4).generate(N16, N4) * 2
         melody_rhythm = melody_rhythm1 + melody_rhythm2
-        melody = melody_rhythm.add_melody(gen_notes(melody_rhythm, melody_scale))
+        melody = melody_rhythm.add_notes(gen_notes(melody_rhythm, melody_scale))
 
 
         bass_rhythm = Rhythm(TIMESIG, MEASURES).generate(N8, N2)
-        bass_line1 = bass_rhythm.add_melody(gen_notes(bass_rhythm, melody_scale))
+        bass_line1 = bass_rhythm.add_notes(gen_notes(bass_rhythm, melody_scale))
 
         bass_rhythm = Rhythm(TIMESIG, MEASURES).generate(N4, N2)
-        bass_line2 = bass_rhythm.add_melody(gen_notes(bass_rhythm, melody2_scale))
+        bass_line2 = bass_rhythm.add_notes(gen_notes(bass_rhythm, melody2_scale))
 
-        filler1 = Phrase.from_pattern(TIMESIG, MEASURES, [(NoteF(fun+'5'), N2)])
+        filler1 = Melody.from_pattern(TIMESIG, MEASURES, [(NoteF(fun+'5'), N2)])
 
         if k < 6:
             distortion = 0
@@ -102,7 +102,7 @@ def make_music(synth):
     ])
 
 
-    v = Phrase.from_pattern(TIMESIG, MEASURES*2, [(NoteF(fun+'4'), NB*4)])
+    v = Melody.from_pattern(TIMESIG, MEASURES*2, [(NoteF(fun+'4'), NB*4)])
     synth.play_mix([
         play_sequence(untune(v, BPM, distortion*1.2), bass),
         play_sequence(untune(v, BPM, distortion*1.3), violin),

@@ -2,7 +2,7 @@ import random
 from fractions import Fraction
 from itertools import cycle
 
-from music import tone, play_sequence, play_drumbase, Scale, Phrase, Rhythm, NoteF
+from music import tone, play_sequence, play_drumbase, Scale, Melody, Rhythm, NoteF
 from music import NB, N1, N2, N4, N8, N16, N32, N64, N128
 from instruments import kick, snare, hh, bass, violin, banjo
 
@@ -44,7 +44,7 @@ def make_music(synth):
     scale2 = scale.range('C4', 'D5')
     bass_scale1 = scale.range('C2', 'D3')
     bass_scale2 = scale.range('C3', 'D4')
-    rest = NoteF('C', 0, 0)
+    rest = NoteF('C', octave=0, freq=0)
     dominants = [0, 3, 4, 0, 0, 1, 4, 0]
     for dom, weight in zip((dominants), (weights)):
         # main melody
@@ -53,34 +53,34 @@ def make_music(synth):
         rhythm = r1 + r2
         notes = [*random.choices(scale1, weight, k=len(r1)),
                  *random.choices(scale1, weight, k=len(r2))]
-        melody = rhythm.add_melody(notes)
+        melody = rhythm.add_notes(notes)
 
         # melody
         rhythm = Rhythm(TIMESIG, MEASURES).generate(N16, N16)
         notes = random.choices(scale1, weight, k=len(rhythm))
-        melody = rhythm.add_melody(notes)
+        melody = rhythm.add_notes(notes)
 
         # melody2
         rhythm = Rhythm(TIMESIG, MEASURES).generate(N16, N16)
         notes = [scale1[dom], rest, scale1[dom+3], rest] * MEASURES * 4
-        melody2 = rhythm.add_melody(notes)
+        melody2 = rhythm.add_notes(notes)
 
         # bass line 1
         rhythm = Rhythm(TIMESIG, MEASURES).generate(N8, N2)
         notes2a = random.choices(scale1, weight, k=len(rhythm))*(MEASURES//2)
         notes2b = random.choices(scale1, weight, k=len(rhythm))*(MEASURES//2)
-        bass_line1 = rhythm.add_melody(notes2a + notes2b)
+        bass_line1 = rhythm.add_notes(notes2a + notes2b)
 
         # bass line 2 (slower)
         rhythm = Rhythm(TIMESIG, MEASURES).generate(N4, NB, prob=0.7, decay=0)
         weight2 = [w if w == H else 0 for w in weight]
         notes2 = random.choices(scale2, weight2, k=len(rhythm))
-        #bass_line2 = Phrase.from_list(TIMESIG, zip(notes2, rhythm4))
-        bass_line2 = rhythm.add_melody(notes2)
+        #bass_line2 = Melody.from_list(TIMESIG, zip(notes2, rhythm4))
+        bass_line2 = rhythm.add_notes(notes2)
 
         # fillers
-        filler1 = Phrase.from_pattern(TIMESIG, MEASURES, [(bass_scale1[dom], N2)])
-        filler2 = Phrase.from_pattern(TIMESIG, MEASURES, [(bass_scale2[dom], N1)])
+        filler1 = Melody.from_pattern(TIMESIG, MEASURES, [(bass_scale1[dom], N2)])
+        filler2 = Melody.from_pattern(TIMESIG, MEASURES, [(bass_scale2[dom], N1)])
 
         BPM = random.choice([140, 150])
         pattern = random.choice([[1,0,0,0], [1,0,1,0], [0,1,0,1]])
