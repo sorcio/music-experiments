@@ -80,12 +80,13 @@ class Note:
         """Return the frequency of the note at the given octave."""
         return notes[f'{self.note}{octave}']
 
+
 # TODO: figure out how to represent and name:
 # 1) notes with just a name (e.g. C, E#, or Ab)
 # 2) notes on a keyboard, with name and octave/freq
-# 3) notes on a keyboard with a duration
+# 3) notes on a keyboard with a note value (as fraction)
 # 4) frequencies without a corresponding note
-# 1 and 2 are currently represented by Note and NoteF
+# 1, 2, and 3 are currently represented by Note, NoteF, NoteFV
 # but are subject to change in future versions
 
 @functools.total_ordering
@@ -124,6 +125,20 @@ for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat), octaves):
     notes[f'{nf}{o}'] = NoteF(nf, octave=o, freq=t)
 
 
+class NoteFV(NoteF):
+    """A note with a frequency and a note value (as fraction)."""
+    def __init__(self, note, value, *, octave=None, freq=None):
+        super().__init__(note, octave=octave, freq=freq)
+        self.value = value  # note value as a fraction
+
+    def uninote(self):
+        return note_symbols.get(self.value, ' ')
+
+    def duration(self, bpm):
+        return self.value / (bpm / 240.)
+
+    def to_tuple(self, bpm):
+        return (self.freq, self.duration(bpm))
 
 
 # intervals for some common scales
