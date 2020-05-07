@@ -90,7 +90,9 @@ class Note:
 
 @functools.total_ordering
 class NoteF(Note):
-    def __init__(self, note, octave=None, freq=None):
+    def __init__(self, note, *, octave=None, freq=None):
+        # TODO: split this into two separate constructors
+        # and figure out if the freq belongs here
         if octave is not None and freq is not None:
             self.note, self.octave, self.freq = note, octave, freq
         else:
@@ -118,8 +120,8 @@ octaves = chain.from_iterable(repeat(o, 12) for o in range(8))
 for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat), octaves):
     #notes[f'{ns}{o}'] = notes[f'{nf}{o}'] = t
     # TODO: this creates a weird loop with NoteF, figure out a better way
-    notes[f'{ns}{o}'] = NoteF(ns, o, t)
-    notes[f'{nf}{o}'] = NoteF(nf, o, t)
+    notes[f'{ns}{o}'] = NoteF(ns, octave=o, freq=t)
+    notes[f'{nf}{o}'] = NoteF(nf, octave=o, freq=t)
 
 
 
