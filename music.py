@@ -315,3 +315,20 @@ class Rhythm:
                 total = 0
         result[-1] = '─┤'
         return ''.join(result)
+
+
+class Notes:
+    """A sequence of notes with no rhythm."""
+    def __init__(self, notes=None):
+        self.notes = notes
+
+    def __add__(self, other):
+        notes = other.notes if isinstance(other, Notes) else other
+        return Notes(self.notes + notes)
+
+    def __mul__(self, value):
+        notes = self.notes * value if self.notes else None
+        return Notes(notes)
+
+    def __len__(self):
+        return len(self.notes)
