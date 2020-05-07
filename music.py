@@ -199,57 +199,57 @@ rest_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D13A, 0x1D143))))
 NB, N1, N2, N4, N8, N16, N32, N64, N128 = note_values
 
 
+# TODO: figure out how to handle generative algos and other
+# operations (e.g. repetition, serialization, etc.)
 
-# TODO: figure out how to break down these classes.
-# The current idea is more or less:
-# * Rhythm: represent a list of durations as fractions
-# * Melody: represent a list of notes without duration
-# * Phrase: includes a list of notes and corresponding durations
-# Also need to figure out how to handle generative algos
-# and other operations (e.g. repetition, serialization, etc.)
-class Phrase:
-    def __init__(self, timesig, measures, rhythm=None, notes=None):
+# There are 3 main classes:
+# * Rhythm: represent a list of note values as fractions
+# * Notes: represent a list of notes without note values
+# * Melody: represent a list of notes and corresponding values
+# "Note value" indicates the relative duration of a note as a fraction
+
+class Melody:
+    """A sequence of notes with a rhythm."""
+    def __init__(self, timesig, measures, notes=None):
         self.timesig = timesig
         self.measures = measures
-        self.rhythm = rhythm
         self.notes = notes
+
+    @classmethod
+    def from_rhythm_and_notes(cls, timesig, measures, rhythm=None, notes=None):
+        notes = [NoteFV(n.note, d, octave=n.octave, freq=n.freq)
+                 for n, d in zip(notes, rhythm)]
+        return cls(timesig, measures, notes)
 
     @classmethod
     def from_list(cls, timesig, list):
         notes, rhythm = zip(*list)
         measures = sum(notes) / timesig
-        return cls(timesig, measures, rhythm, notes)
+        return cls.from_rhythm_and_notes(timesig, measures, rhythm, notes)
 
     @classmethod
     def from_pattern(cls, timesig, measures, pattern):
         plen = sum(f for n, f in pattern)
         list = pattern * int((timesig*measures) / plen)
         notes, rhythm = zip(*list)
-        return cls(timesig, measures, rhythm, notes)
+        return cls.from_rhythm_and_notes(timesig, measures, rhythm, notes)
 
     def __add__(self, other):
         if self.timesig != other.timesig:
             raise ValueError(f'Mismatching time signatures '
                              f'({self.timesig!s} and {other.timesig!s})')
-        rhythm = self.rhythm+other.rhythm if self.rhythm and other.rhythm else None
-        notes = self.notes+other.notes if self.notes and other.notes else None
-        return Phrase(self.timesig, self.measures+other.measures, rhythm, notes)
+        return Melody(self.timesig, self.measures+other.measures,
+                      self.notes+other.notes)
 
     def __mul__(self, value):
-        rhythm = self.rhythm * value if self.rhythm else None
-        notes = self.notes * value if self.notes else None
-        return Phrase(self.timesig, self.measures*value, rhythm, notes)
+        return Melody(self.timesig, self.measures*value, self.notes*value)
 
     def __imul__(self, value):
-        if self.rhythm:
-            self.rhythm *= value
-        if self.notes:
-            self.notes *= value
+        self.notes *= value
         return self
 
     def to_sequence(self, bpm):
-        durations = (f / (bpm / 240.) for f in self.rhythm)
-        return zip((n.freq for n in self.notes), durations)
+        return (n.to_tuple(bpm) for n in self.notes)
 
 
 def gen_rhythm(duration, minnote=N16, maxnote=NB, prob=0.9, decay=0.1):
@@ -264,6 +264,7 @@ def gen_rhythm(duration, minnote=N16, maxnote=NB, prob=0.9, decay=0.1):
 
 
 class Rhythm:
+    """A rhythm as a sequence of note values (fractions)."""
     def __init__(self, timesig, measures, rhythm=None):
         self.timesig = timesig
         self.measures = measures
@@ -299,8 +300,9 @@ class Rhythm:
         self.rhythm = pattern * repetitions
         return self
 
-    def add_melody(self, melody):
-        return Phrase(self.timesig, self.measures, self.rhythm, melody)
+    def add_notes(self, notes):
+        notes = notes.notes if isinstance(notes, Notes) else notes
+        return Melody.from_rhythm_and_notes(self.timesig, self.measures, self.rhythm, notes)
 
     def uninotes(self, fastest=None):
         line, sep = '─', '│'
