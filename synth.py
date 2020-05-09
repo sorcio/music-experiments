@@ -228,11 +228,13 @@ def run_synth(callable, output=None, **kwargs):
 if __name__ == "__main__":
     # TODO: use argparse
     import sys
-    filename = None
+    outfile = None
     if len(sys.argv) >= 2:
-        module = sys.argv[1]
+        scorename = sys.argv[1]
     if len(sys.argv) == 3:
-        filename = sys.argv[2]
-    file = next(f for f in Path('.').glob('**/*.py') if f.stem == module)
-    module = '.'.join([*file.parent.parts, file.stem])
-    run_synth(import_module(module).make_music, output=filename)
+        outfile = sys.argv[2]
+    # TODO: handle multiple scores with the same name
+    scorefile = next(f for f in Path('.').glob('**/*.py') if f.stem == scorename)
+    # scores/ezio/ezio0.py -> scores.ezio.ezio0
+    module = '.'.join([*scorefile.parent.parts, scorefile.stem])
+    run_synth(import_module(module).make_music, output=outfile)
