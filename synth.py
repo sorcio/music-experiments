@@ -1,7 +1,10 @@
-from contextlib import contextmanager
-from functools import lru_cache, partial
-import threading
 import wave
+import threading
+
+from pathlib import Path
+from importlib import import_module
+from functools import lru_cache, partial
+from contextlib import contextmanager
 
 import numpy as np
 import soundcard as sc
@@ -223,11 +226,13 @@ def run_synth(callable, output=None, **kwargs):
 
 
 if __name__ == "__main__":
+    # TODO: use argparse
     import sys
-    if len(sys.argv) == 2:
+    filename = None
+    if len(sys.argv) >= 2:
         module = sys.argv[1]
-        run_synth(__import__(module).make_music)
     if len(sys.argv) == 3:
-        module = sys.argv[1]
         filename = sys.argv[2]
-        run_synth(__import__(module).make_music, output=filename)
+    file = next(f for f in Path('.').glob('**/*.py') if f.stem == module)
+    module = '.'.join([*file.parent.parts, file.stem])
+    run_synth(import_module(module).make_music, output=filename)
