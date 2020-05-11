@@ -1,3 +1,4 @@
+import re
 import random
 import functools
 
@@ -243,6 +244,34 @@ class Melody:
         list = pattern * int((timesig*measures) / plen)
         notes, rhythm = zip(*list)
         return cls.from_rhythm_and_notes(timesig, measures, rhythm, notes)
+
+    @classmethod
+    def from_rtttl(cls, ringtone):
+        sections = ringtone.split(':')
+        if len(sections) == 3:
+            jintu, defaults, data = map(str.strip, sections)
+        else:
+            defaults, data = sections
+        defaults = dict(d.split('=') for d in defaults.split(','))
+        r = re.compile('(\d+)?([^\d.]+)(\d)?(\.)?')
+        notes = []
+        dur_total = Fraction(0)
+        for note in map(str.strip, data.split(',')):
+            m = r.match(note)
+            if not m:
+                raise ValueError(f'Invalid note: {note!r}')
+            dur = Fraction(1, int(m[1] if m[1] is not None else defaults['d']))
+            pitch = m[2].upper()
+            octave = m[3] if m[3] is not None else defaults['o']
+            if m[4] is not None:
+                dur += dur / 2
+            dur_total += dur
+            n = Note.rest(dur) if pitch in {'P', 'R'} else Note(pitch+octave, dur)
+            notes.append(n)
+        inst = cls(Fraction(4,4), dur_total.numerator, notes)
+        inst.bpm = int(defaults['b'])
+        return inst
+
 
     def __add__(self, other):
         if self.timesig != other.timesig:
