@@ -222,7 +222,8 @@ class Melody:
 
     @classmethod
     def from_rhythm_and_notes(cls, timesig, measures, rhythm=None, notes=None):
-        notes = [Note(n.name, value=v) for n, v in zip(notes, rhythm)]
+        notes = [Note.rest(v) if n.name == 'R' else Note(n.name, value=v)
+                 for n, v in zip(notes, rhythm)]
         return cls(timesig, measures, notes)
 
     @classmethod
