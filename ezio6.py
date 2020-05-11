@@ -2,7 +2,7 @@ import random
 from fractions import Fraction
 from itertools import cycle
 
-from music import tone, play_sequence, play_drumbase, Scale, Melody, Rhythm, NoteF
+from music import tone, play_sequence, play_drumbase, Scale, Melody, Rhythm, Note
 from music import NB, N1, N2, N4, N8, N16, N32, N64, N128
 from instruments import kick_hard, kick, snare, hh, bass, violin, banjo
 
@@ -56,7 +56,7 @@ def make_music(synth):
     scale2 = scale.range('C4', 'C5')
     bass_scale1 = scale.range('C2', 'C3')
     bass_scale2 = scale.range('C3', 'C4')
-    rest = NoteF('C', octave=0, freq=0)
+    rest = Note.rest()
     last_index = 0
     for dom, weight in zip((indexes*4), (weights*4)):
         # main melody

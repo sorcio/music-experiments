@@ -2,7 +2,7 @@ import random
 from fractions import Fraction
 from itertools import cycle
 
-from music import tone, play_sequence, play_drumbase, Scale, Melody, Rhythm, NoteF
+from music import tone, play_sequence, play_drumbase, Scale, Melody, Rhythm, Note
 from music import NB, N1, N2, N4, N8, N16, N32, N64, N128
 from instruments import kick, snare, hh, bass, violin, banjo
 
@@ -36,15 +36,11 @@ def make_music(synth):
         [L,H,L,H,H,L,H,L], # Gmaj
         [H,L,H,L,H,L,M,H], # Cm
     ]
-    scale1 = [note.get_freq(5) for note in scale]
-    scale2 = [note.get_freq(4) for note in scale]
-    bass_scale1 = [note.get_freq(2) for note in scale]
-    bass_scale2 = [note.get_freq(3) for note in scale]
     scale1 = scale.range('C5', 'D6')
     scale2 = scale.range('C4', 'D5')
     bass_scale1 = scale.range('C2', 'D3')
     bass_scale2 = scale.range('C3', 'D4')
-    rest = NoteF('C', octave=0, freq=0)
+    rest = Note.rest()
     dominants = [0, 3, 4, 0, 0, 1, 4, 0]
     for dom, weight in zip((dominants), (weights)):
         # main melody
