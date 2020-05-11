@@ -20,15 +20,6 @@ def play_drumbase(beats, duration, drum=kick):
             yield silence(duration)
 
 
-def tone(n, base_freq=440.0):
-    """Return the frequency of the nth interval from base_freq (in 12-TET)."""
-    # -2 -1 0  1  2  3  4  5  6  7  8  9  10 11 12
-    # G  G# A  A# B  C  C# D  D# E  F  F# G  G# A
-    # G  Ab A  Bb B  C  Db D  Eb E  F  Gb G  Ab A
-    return base_freq * 2 ** (n/12)
-
-
-
 # This dict maps the names of the notes with the name of the
 # following note, depending on the amount of semitones in the
 # interval.  This ensures that e.g., a C will always be followed
@@ -112,19 +103,6 @@ class NoteF(Note):
         return f'{self.note}{self.octave}({self.freq:.2f})'
 
 
-# This dict maps the name of the notes from C0 (included) to C8 (excluded)
-# to the corresponding frequency (in 12-TET).
-tones = [tone(i) for i in range(-57, 39)]
-names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-notes = {}
-
-octaves = chain.from_iterable(repeat(o, 12) for o in range(8))
-for t, ns, nf, o in zip(tones, cycle(names_sharp), cycle(names_flat), octaves):
-    #notes[f'{ns}{o}'] = notes[f'{nf}{o}'] = t
-    # TODO: this creates a weird loop with NoteF, figure out a better way
-    notes[f'{ns}{o}'] = NoteF(ns, octave=o, freq=t)
-    notes[f'{nf}{o}'] = NoteF(nf, octave=o, freq=t)
 
 
 class NoteFV(NoteF):
@@ -141,6 +119,50 @@ class NoteFV(NoteF):
 
     def to_tuple(self, bpm):
         return (self.freq, self.duration(bpm))
+
+
+
+def tone(n, base_freq=440.0, divisions=12):
+    """Return the frequency of the nth interval from base_freq (in 12-TET)."""
+    # -2 -1 0  1  2  3  4  5  6  7  8  9  10 11 12
+    # G  G# A  A# B  C  C# D  D# E  F  F# G  G# A
+    # G  Ab A  Bb B  C  Db D  Eb E  F  Gb G  Ab A
+    return base_freq * 2 ** (n/divisions)
+
+def tet_generator(start_freq, tones):
+    """Generate a list of *tones* frequencies from start_freq to start_freq*2."""
+    return [tone(n, start_freq, tones) for n in range(tones)]
+
+def map_names(tones, *names):
+    """Map one or more lists of names to a list of frequencies."""
+    assert all(len(tones) == len(n) for n in names)
+    res = {}
+    for num, ns in enumerate(zip(*names)):
+        for name in ns:
+            res[name] = tones[num]
+    return res
+
+
+# The tunings dict maps the names of different tuning systems to a tuning dict.
+# Each tuning dict maps the names of the notes to a frequency.
+# The name of the note can be e.g. 'C', 'Db', 'E#', or other strings, and
+# does not include the octave.  Multiple names can have the same frequency.
+# Each tuning dict generally (but not necessarily) cover the lowest octave
+# (e.g. C0-C1) and its frequencies will be multiplied to find the
+# frequencies for the other octaves.  For example, 'C7' will be calculated
+# by doing: tuning_dict['C'] * (2**7), and 'DO#5' by doing:
+# tuning_dict['DO#'] * (2**5).
+names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+C0 = 16.351597831287414
+
+tunings = {
+    '12TET': map_names(tet_generator(C0, 12), names_sharp, names_flat),
+}
+# default tuning
+TUNING = tunings['12TET']
+
+
 
 
 # intervals for some common scales
