@@ -53,63 +53,44 @@ def find_next_note(note, interval):
     return next_notes[note][interval]
 
 
-class Note:
-    """A note with a name and no frequency/duration."""
-    def __init__(self, note):
-        self.note = note.note if isinstance(note, Note) else note
-    def __eq__(self, other):
-        other_note = other.note if isinstance(other, Note) else other
-        return self.note == other_note
-    def __hash__(self):
-        return hash(self.note)
-    def __repr__(self):
-        return self.note
-    def __str__(self):
-        return self.note
-    def next_note(self, interval):
-        # this assumes heptatonic scales
-        return Note(next_notes[self.note][interval])
-    def get_freq(self, octave):
-        """Return the frequency of the note at the given octave."""
-        return notes[f'{self.note}{octave}']
 
-
-# TODO: figure out how to represent and name:
-# 1) notes with just a name (e.g. C, E#, or Ab)
-# 2) notes on a keyboard, with name and octave/freq
-# 3) notes on a keyboard with a note value (as fraction)
-# 4) frequencies without a corresponding note
-# 1, 2, and 3 are currently represented by Note, NoteF, NoteFV
-# but are subject to change in future versions
-
+#TODO: figure out whether to create a separate Rest class
 @functools.total_ordering
-class NoteF(Note):
-    def __init__(self, note, *, octave=None, freq=None):
-        # TODO: split this into two separate constructors
-        # and figure out if the freq belongs here
-        if octave is not None and freq is not None:
-            self.note, self.octave, self.freq = note, octave, freq
-        else:
-            self.note = note[:-1]
-            self.octave = int(note[-1])
-            self.freq = notes[note].freq
+class Note:
+    """A note with a name, a frequency, and an optional note value."""
+    def __init__(self, name, value=None):
+        self.name = name
+        self.note = note = name[:-1] if name else None
+        self.octave = int(name[-1]) if name and len(name) >= 2 else None
+        self.freq = TUNING[note]*(2**self.octave) if note in TUNING else None
+        self.value = value
+
+    @classmethod
+    def from_freq(cls, freq, value=None):
+        # TODO figure out name/octave
+        inst = cls(None, value=value)
+        inst.freq = freq
+        return inst
+
+    @classmethod
+    def rest(cls, value=None):
+        # TODO figure out name/octave
+        inst = cls('R', value=value)
+        inst.freq = 0
+        inst.note = None
+        return inst
+
     def __eq__(self, other):
         return self.freq == other.freq
+
     def __lt__(self, other):
         return self.freq < other.freq
+
     def __str__(self):
-        return f'{self.note}{self.octave}'
+        return f'{self.name}'
+
     def __repr__(self):
-        return f'{self.note}{self.octave}({self.freq:.2f})'
-
-
-
-
-class NoteFV(NoteF):
-    """A note with a frequency and a note value (as fraction)."""
-    def __init__(self, note, value, *, octave=None, freq=None):
-        super().__init__(note, octave=octave, freq=freq)
-        self.value = value  # note value as a fraction
+        return f'{self.name}({self.freq:.2f})'
 
     def uninote(self):
         return note_symbols.get(self.value, ' ')
@@ -241,8 +222,7 @@ class Melody:
 
     @classmethod
     def from_rhythm_and_notes(cls, timesig, measures, rhythm=None, notes=None):
-        notes = [NoteFV(n.note, d, octave=n.octave, freq=n.freq)
-                 for n, d in zip(notes, rhythm)]
+        notes = [Note(n.name, value=v) for n, v in zip(notes, rhythm)]
         return cls(timesig, measures, notes)
 
     @classmethod
