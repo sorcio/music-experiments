@@ -8,6 +8,7 @@ from itertools import cycle, repeat, chain, islice
 from instruments import default_tone, kick, silence
 
 
+
 def play_sequence(sequence, instrument=default_tone):
     for freq, duration in sequence:
         yield instrument(freq, duration)
@@ -21,38 +22,65 @@ def play_drumbase(beats, duration, drum=kick):
             yield silence(duration)
 
 
-# This dict maps the names of the notes with the name of the
-# following note, depending on the amount of semitones in the
-# interval.  This ensures that e.g., a C will always be followed
-# by a D, and that, if you go up 1 semitone from a A, you get a
-# B flat  and not an A sharp.
-next_notes = {
-    'C':  {1: 'Db', 2: 'D', 3: 'D#'},
-    'C#': {1: 'D',  2: 'D#'},
-    'Db': {2: 'Eb', 3: 'E'},
-    'D':  {1: 'Eb', 2: 'E', 3: 'E#'},
-    'D#': {1: 'E',  2: 'E#'},
-    'Eb': {1: 'Fb', 2: 'F'},
-    'E':  {1: 'F',  2: 'F#'},
-    'E#': {1: 'F#'},
-    'Fb': {2: 'Gb', 3: 'G'},
-    'F':  {1: 'Gb', 2: 'G', 3: 'G#'},
-    'F#': {1: 'G',  2: 'G#'},
-    'Gb': {2: 'Ab', 3: 'A'},
-    'G':  {1: 'Ab', 2: 'A', 3: 'A#'},
-    'G#': {1: 'A',  2: 'A#'},
-    'Ab': {2: 'Bb', 3: 'B'},
-    'A':  {1: 'Bb', 2: 'B', 3: 'B#'},
-    'A#': {1: 'B',  2: 'B#'},
-    'Bb': {1: 'Cb', 2: 'C'},
-    'B':  {1: 'C',  2: 'C#'},
-    'B#': {1: 'C#'},
-    'Cb': {2: 'Db', 3: 'D'},
+
+## Tuning ##
+
+
+def tone(n, base_freq=440.0, divisions=12):
+    """Return the frequency of the nth interval from base_freq (in 12-TET)."""
+    # -2 -1 0  1  2  3  4  5  6  7  8  9  10 11 12
+    # G  G# A  A# B  C  C# D  D# E  F  F# G  G# A
+    # G  Ab A  Bb B  C  Db D  Eb E  F  Gb G  Ab A
+    return base_freq * 2 ** (n/divisions)
+
+def tet_generator(start_freq, tones):
+    """Generate a list of *tones* frequencies from start_freq to start_freq*2."""
+    return [tone(n, start_freq, tones) for n in range(tones)]
+
+def map_names(tones, *names):
+    """Map one or more lists of names to a list of frequencies."""
+    assert all(len(tones) == len(n) for n in names)
+    res = {}
+    for num, ns in enumerate(zip(*names)):
+        for name in ns:
+            res[name] = tones[num]
+    return res
+
+
+# The tunings dict maps the names of different tuning systems to a tuning dict.
+# Each tuning dict maps the names of the notes to a frequency.
+# The name of the note can be e.g. 'C', 'Db', 'E#', or other strings, and
+# does not include the octave.  Multiple names can have the same frequency.
+# Each tuning dict generally (but not necessarily) cover the lowest octave
+# (e.g. C0-C1) and its frequencies will be multiplied to find the
+# frequencies for the other octaves.  For example, 'C7' will be calculated
+# by doing: tuning_dict['C'] * (2**7), and 'DO#5' by doing:
+# tuning_dict['DO#'] * (2**5).
+names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
+names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
+C0 = 16.351597831287414
+
+tunings = {
+    '12TET': map_names(tet_generator(C0, 12), names_sharp, names_flat),
 }
+# default tuning
+TUNING = tunings['12TET']
 
-def find_next_note(note, interval):
-    return next_notes[note][interval]
 
+
+## Notes ##
+
+
+note_values = [Fraction(1,2**n)/Fraction(1,2) for n in range(9)]
+note_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D15C, 0x1D165)))))
+rest_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D13A, 0x1D143)))))
+
+# TODO: all these constants have corresponding symbols.
+# The names could be improved and additional constants
+# could be added.  Constants for rests need to be added
+# too.  Different intervals can be created by multiplying
+# and dividing these constants.
+NB, N1, N2, N4, N8, N16, N32, N64, N128 = note_values
 
 
 #TODO: figure out whether to create a separate Rest class
@@ -104,47 +132,40 @@ class Note:
 
 
 
-def tone(n, base_freq=440.0, divisions=12):
-    """Return the frequency of the nth interval from base_freq (in 12-TET)."""
-    # -2 -1 0  1  2  3  4  5  6  7  8  9  10 11 12
-    # G  G# A  A# B  C  C# D  D# E  F  F# G  G# A
-    # G  Ab A  Bb B  C  Db D  Eb E  F  Gb G  Ab A
-    return base_freq * 2 ** (n/divisions)
-
-def tet_generator(start_freq, tones):
-    """Generate a list of *tones* frequencies from start_freq to start_freq*2."""
-    return [tone(n, start_freq, tones) for n in range(tones)]
-
-def map_names(tones, *names):
-    """Map one or more lists of names to a list of frequencies."""
-    assert all(len(tones) == len(n) for n in names)
-    res = {}
-    for num, ns in enumerate(zip(*names)):
-        for name in ns:
-            res[name] = tones[num]
-    return res
+## Scales ##
 
 
-# The tunings dict maps the names of different tuning systems to a tuning dict.
-# Each tuning dict maps the names of the notes to a frequency.
-# The name of the note can be e.g. 'C', 'Db', 'E#', or other strings, and
-# does not include the octave.  Multiple names can have the same frequency.
-# Each tuning dict generally (but not necessarily) cover the lowest octave
-# (e.g. C0-C1) and its frequencies will be multiplied to find the
-# frequencies for the other octaves.  For example, 'C7' will be calculated
-# by doing: tuning_dict['C'] * (2**7), and 'DO#5' by doing:
-# tuning_dict['DO#'] * (2**5).
-names_sharp = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B']
-names_flat  = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B']
-C0 = 16.351597831287414
-
-tunings = {
-    '12TET': map_names(tet_generator(C0, 12), names_sharp, names_flat),
+# This dict maps the names of the notes with the name of the
+# following note, depending on the amount of semitones in the
+# interval.  This ensures that e.g., a C will always be followed
+# by a D, and that, if you go up 1 semitone from a A, you get a
+# B flat  and not an A sharp.
+next_notes = {
+    'C':  {1: 'Db', 2: 'D', 3: 'D#'},
+    'C#': {1: 'D',  2: 'D#'},
+    'Db': {2: 'Eb', 3: 'E'},
+    'D':  {1: 'Eb', 2: 'E', 3: 'E#'},
+    'D#': {1: 'E',  2: 'E#'},
+    'Eb': {1: 'Fb', 2: 'F'},
+    'E':  {1: 'F',  2: 'F#'},
+    'E#': {1: 'F#'},
+    'Fb': {2: 'Gb', 3: 'G'},
+    'F':  {1: 'Gb', 2: 'G', 3: 'G#'},
+    'F#': {1: 'G',  2: 'G#'},
+    'Gb': {2: 'Ab', 3: 'A'},
+    'G':  {1: 'Ab', 2: 'A', 3: 'A#'},
+    'G#': {1: 'A',  2: 'A#'},
+    'Ab': {2: 'Bb', 3: 'B'},
+    'A':  {1: 'Bb', 2: 'B', 3: 'B#'},
+    'A#': {1: 'B',  2: 'B#'},
+    'Bb': {1: 'Cb', 2: 'C'},
+    'B':  {1: 'C',  2: 'C#'},
+    'B#': {1: 'C#'},
+    'Cb': {2: 'Db', 3: 'D'},
 }
-# default tuning
-TUNING = tunings['12TET']
 
-
+def find_next_note(note, interval):
+    return next_notes[note][interval]
 
 
 # intervals for some common scales
@@ -198,16 +219,7 @@ class Scale:
 
 
 
-note_values = [Fraction(1,2**n)/Fraction(1,2) for n in range(9)]
-note_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D15C, 0x1D165)))))
-rest_symbols = dict(zip(note_values, ''.join(map(chr, range(0x1D13A, 0x1D143)))))
-
-# TODO: all these constants have corresponding symbols.
-# The names could be improved and additional constants
-# could be added.  Constants for rests need to be added
-# too.  Different intervals can be created by multiplying
-# and dividing these constants.
-NB, N1, N2, N4, N8, N16, N32, N64, N128 = note_values
+## Melodies and Rhythms ##
 
 
 # TODO: figure out how to handle generative algos and other
