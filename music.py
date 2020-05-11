@@ -58,6 +58,8 @@ next_notes = {
     'Cb': {2: 'Db', 3: 'D'},
 }
 
+def find_next_note(note, interval):
+    return next_notes[note][interval]
 
 
 class Note:
@@ -161,10 +163,10 @@ class Scale:
         scale_intervals = intervals[scale]
         self.intervals = list(islice(cycle(scale_intervals), mode,
                                      mode+len(scale_intervals)))
-        notes = [Note(key)]
+        notes = [key]
         for i in self.intervals:
-            notes.append(notes[-1].next_note(i))
-        self.notes = notes
+            notes.append(find_next_note(notes[-1], i))
+        self.notes = notes[:-1]
 
     def __repr__(self):
         modes = {1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII'}
