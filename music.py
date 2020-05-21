@@ -109,11 +109,15 @@ class Note:
         inst.note = None
         return inst
 
+    def _to_note(self, note):
+        # if note is a str, convert it to a Note inst
+        return Note(note) if isinstance(note, str) else note
+
     def __eq__(self, other):
-        return self.freq == other.freq
+        return self.freq == self._to_note(other).freq
 
     def __lt__(self, other):
-        return self.freq < other.freq
+        return self.freq < self._to_note(other).freq
 
     def __str__(self):
         return f'{self.name}'
@@ -205,10 +209,16 @@ class Scale:
     def __iter__(self):
         return iter(self.notes)
 
+    def __getitem__(self, index):
+        return self.notes[index]
+
+    def __len__(self):
+        return len(self.notes)
+
     def range(self, start, end):
         start, end = Note(start), Note(end)
-        # TODO: improve error checking/reporting
-        assert start.octave <= end.octave
+        if end < start:
+            raise ValueError('Invalid range (end < start).')
         res = []
         for octave in range(start.octave, end.octave+1):
             for note in self.notes:
