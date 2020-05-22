@@ -96,7 +96,20 @@ class Note:
 
     @classmethod
     def from_freq(cls, freq, value=None):
-        # TODO figure out name/octave
+        # Try to find out if the freq has a corresponding named note,
+        # by first dividing the freq until we reach the range of the
+        # first octave and then by looking for a match there
+        max_freq = max(TUNING.values())
+        freq0 = freq
+        octave = 0
+        while freq0 > max_freq:
+            freq0 /= 2
+            octave += 1
+        freq0 = round(freq0, 2)
+        for name, tfreq in TUNING.items():
+            if freq0 == round(tfreq, 2):
+                return cls(name + str(octave), value=value)
+        # if we can't find a corresponding name, set it to None
         inst = cls(None, value=value)
         inst.freq = freq
         return inst
@@ -104,9 +117,9 @@ class Note:
     @classmethod
     def rest(cls, value=None):
         # TODO figure out name/octave
-        inst = cls('R', value=value)
+        inst = cls(None, value=value)
+        inst.name = 'Rest'
         inst.freq = 0
-        inst.note = None
         return inst
 
     def _to_note(self, note):
@@ -120,13 +133,14 @@ class Note:
         return self.freq < self._to_note(other).freq
 
     def __str__(self):
-        return f'{self.name}'
+        return self.name or 'Note'
 
     def __repr__(self):
-        return f'{self.name}({self.freq:.2f})'
+        return f'{str(self)}({self.freq:.2f})'
 
     def uninote(self):
-        return note_symbols.get(self.value, ' ')
+        symbols = rest_symbols if self.name == 'Rest' else note_symbols
+        return symbols.get(self.value, ' ')
 
     def duration(self, bpm):
         return self.value / (bpm / 240.)
