@@ -289,7 +289,7 @@ class Melody:
         else:
             defaults, data = sections
         defaults = dict(d.split('=') for d in defaults.split(','))
-        r = re.compile('(\d+)?([^\d.]+)(\d)?(\.)?')
+        r = re.compile(r'(\d+)?([^\d.]+)(\d)?(\.)?')
         notes = []
         dur_total = Fraction(0)
         for note in map(str.strip, data.split(',')):
