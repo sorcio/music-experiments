@@ -271,7 +271,7 @@ class Melody:
     @classmethod
     def from_list(cls, timesig, list):
         notes, rhythm = zip(*list)
-        measures = sum(notes) / timesig
+        measures = sum(rhythm) / timesig
         return cls.from_rhythm_and_notes(timesig, measures, rhythm, notes)
 
     @classmethod
