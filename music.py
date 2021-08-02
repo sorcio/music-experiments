@@ -198,6 +198,19 @@ intervals = {
     'pentatonic major': [2, 2, 3, 2, 3],
 }
 
+
+# map mode number to grade/name
+mode_names = {
+    1: 'I/Ionian',
+    2: 'II/Dorian',
+    3: 'III/Phrygian',
+    4: 'IV/Lydian',
+    5: 'V/Mixolydian',
+    6: 'VI/Aeolian',
+    7: 'VII/Locrian',
+}
+
+
 # currently only works with heptatonic scales
 class Scale:
     def __init__(self, key, scale, mode=1):
@@ -212,10 +225,9 @@ class Scale:
         self.notes = notes[:-1]
 
     def __repr__(self):
-        modes = {1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V', 6: 'VI', 7: 'VII'}
         notes = " ".join(map(str, self.notes))
         return (f'<Scale key={self.key!r} scale={self.scale!r} '
-                f'mode={modes[self.mode]!r} notes={notes!r}>')
+                f'mode={mode_names[self.mode]!r} notes={notes!r}>')
 
     def __str__(self):
         return ' '.join(map(str, self.notes))
