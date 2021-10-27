@@ -153,7 +153,7 @@ class Queue0:
 class OutputDevice:
     def __init__(self):
         self.thread = None
-        self.__terminate = False
+        self.__terminated = False
 
     def __enter__(self):
         if self.thread:
@@ -164,11 +164,11 @@ class OutputDevice:
         return self
 
     def __exit__(self, *args):
-        self.__terminate = True
+        self.__terminated = True
 
     @property
-    def terminate(self):
-        return self.__terminate
+    def terminated(self):
+        return self.__terminated
 
 
 class SoundcardOutput(OutputDevice):
@@ -209,7 +209,7 @@ class SounddeviceOutput(OutputDevice):
         with sd.OutputStream(device=self.device, blocksize=self.blocksize,
             samplerate=SAMPLERATE, channels=self.channels,
             callback=self._feed, latency="low"):
-            while not self.terminate:
+            while not self.terminated:
                 sd.sleep(1)
 
 
