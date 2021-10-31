@@ -7,7 +7,8 @@ from functools import lru_cache, partial
 from contextlib import contextmanager
 
 import numpy as np
-import soundcard as sc
+# import soundcard as sc
+import sounddevice as sd
 
 
 SAMPLERATE = 44100  # default sample rate
@@ -149,13 +150,10 @@ class Queue0:
         return self.get()
 
 
-class SoundcardOutput:
-    def __init__(self, speaker):
-        self.speaker = speaker
+class OutputDevice:
+    def __init__(self):
         self.thread = None
-
-    def play_wave(self, wave):
-        self.queue.put(wave, interrupt_delay=0.1)
+        self.__terminated = False
 
     def __enter__(self):
         if self.thread:
@@ -166,11 +164,53 @@ class SoundcardOutput:
         return self
 
     def __exit__(self, *args):
-        pass
+        self.__terminated = True
+
+    @property
+    def terminated(self):
+        return self.__terminated
+
+
+class SoundcardOutput(OutputDevice):
+    def __init__(self, speaker):
+        super().__init__()
+        self.speaker = speaker
+
+    def play_wave(self, wave):
+        self.queue.put(wave, interrupt_delay=0.1)
 
     def _feed_thread(self):
         for item in self.queue:
             self.speaker.play(item)
+
+
+class SounddeviceOutput(OutputDevice):
+    def __init__(self, device=None, *, blocksize=8192, channels=2):
+        super().__init__()
+        self.device = device
+        self.channels = channels
+        self.buffer = np.empty(0)
+        self.blocksize = blocksize
+
+    def play_wave(self, wave):
+        bs = self.blocksize
+        wave = np.concatenate((self.buffer, wave))
+        for x in range(0, len(wave), bs):
+            chunk = wave[x:x+bs]
+            if len(chunk) >= bs:
+                self.queue.put(chunk, interrupt_delay=0.1)
+            else:
+                self.buffer = chunk
+
+    def _feed(self, outdata, frames, time, status):
+        outdata[:, 0] = self.queue.get()
+
+    def _feed_thread(self):
+        with sd.OutputStream(device=self.device, blocksize=self.blocksize,
+            samplerate=SAMPLERATE, channels=self.channels,
+            callback=self._feed, latency="low"):
+            while not self.terminated:
+                sd.sleep(1)
 
 
 @contextmanager
@@ -182,6 +222,14 @@ def open_sc_stream(samplerate=SAMPLERATE, buffer_duration=1.0):
         # player.channels = [-1]
         with SoundcardOutput(player) as output:
             yield output
+
+
+@contextmanager
+def open_sd_stream(samplerate=SAMPLERATE, buffer_duration=0.4):
+    blocksize = int(samplerate * buffer_duration)
+    with SounddeviceOutput(channels=1, blocksize=blocksize) as output:
+        yield output
+
 
 
 class MyBuffer(bytearray):
@@ -209,7 +257,8 @@ def create_wav_file(filename, sample_rate=SAMPLERATE):
 
 @contextmanager
 def open_soundcard_synth(sample_rate=SAMPLERATE):
-    with open_sc_stream() as stream:
+    # with open_sc_stream() as stream:
+    with open_sd_stream() as stream:
         yield Synth(stream)
 
 
