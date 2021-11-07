@@ -395,9 +395,20 @@ class Rhythm:
         # TODO: it might be better to leave generation outside
         # of the class, and define functions that return a
         # Rhythm instance instead
+        # TODO: a separate function that accepts a list of
+        # [(minnote, maxnote), (minnote, maxnote), ...]
+        # might be better
+        seq = minnote if isinstance(minnote, list) else [(minnote, maxnote)]
         func = func or gen_rhythm
-        self.rhythm = func(self.timesig*self.measures, minnote=minnote,
-                           maxnote=maxnote, prob=prob, decay=decay)
+        if (self.measures % len(seq)) != 0:
+            raise ValueError('The number of min/max note pairs must be '
+                             'a dividend of the number of measures.')
+        measures = self.measures // len(seq)
+        rhythm = []
+        for minnote, maxnote in seq:
+            rhythm.extend(func(self.timesig*measures, minnote=minnote,
+                               maxnote=maxnote, prob=prob, decay=decay))
+        self.rhythm = rhythm
         return self
 
     def pattern(self, pattern):
