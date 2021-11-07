@@ -211,18 +211,38 @@ mode_names = {
 }
 
 
-# currently only works with heptatonic scales
+# TODO: currently only works with heptatonic scales
 class Scale:
     def __init__(self, key, scale, mode=1):
         self.key, self.scale, self.mode = key, scale, mode
-        mode -= 1  # start from 0
-        scale_intervals = intervals[scale]
-        self.intervals = list(islice(cycle(scale_intervals), mode,
-                                     mode+len(scale_intervals)))
+
+        # TODO: workaround for pentatonic scales, doesn't work for other
+        # non-hepta scales and for different modes -- see also
+        # https://music.stackexchange.com/q/30361 and the scale omnibus
+        is_penta = scale == 'pentatonic major'
+        if is_penta:
+            if mode != 1:
+                raise ValueError('Only the first mode is valid '
+                                 'for pentatonic major scales.')
+            scale = 'major'
+
+        self.intervals = self.calc_intervals(scale, mode)
         notes = [key]
         for i in self.intervals:
             notes.append(find_next_note(notes[-1], i))
         self.notes = notes[:-1]
+
+        if is_penta:
+            # remove the 4th and 7th notes and adjust intervals
+            del self.notes[(mode+5)%7]
+            del self.notes[(mode+2)%7]
+            self.intervals = self.calc_intervals(self.scale, mode)
+
+    def calc_intervals(self, scale, mode):
+        mode -= 1  # start from 0
+        scale_intervals = intervals[scale]
+        return list(islice(cycle(scale_intervals), mode,
+                           mode+len(scale_intervals)))
 
     def __repr__(self):
         notes = " ".join(map(str, self.notes))
