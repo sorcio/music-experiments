@@ -36,6 +36,19 @@ Scales
 * All about musical scales - A complete guide:
   https://www.youtube.com/watch?v=Vq2xt2D3e3E
 
+Nomenclature
+============
+
+These links describe the names used in the code and their intended meaning.
+
+* `Note value <https://en.wikipedia.org/wiki/Note_value>`_: a fraction that
+  represent the relative duration of a note.
+* `Melody <https://en.wikipedia.org/wiki/Melody>`_: a sequence of notes with
+  a note value.
+* `Rhythm <https://en.wikipedia.org/wiki/Rhythm>`_: a sequence of note values
+  as fractions.
+* `Notes <https://en.wikipedia.org/wiki/Musical_note>`_: a sequence of notes
+  without note values.
 
 Others
 ======

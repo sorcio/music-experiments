@@ -40,6 +40,17 @@ def default_tone(freq, duration, samplerate=SAMPLERATE):
 
 
 @lru_cache()
+def pure_sin(freq, duration, samplerate=SAMPLERATE):
+    ampl = 0.5
+    wave = sine_wave(duration, freq, ampl, samplerate)
+    atk = 15
+    dcy = 20
+    sus = 0.666
+    rel = release_time(atk, dcy, len(wave))
+    return wave * envelope_ms(atk, dcy, sus, rel, len(wave))
+
+
+@lru_cache()
 def bass(freq, duration, samplerate=SAMPLERATE):
     ampl = 0.5
     bass_wave = sine_wave(duration, 0, 1)
