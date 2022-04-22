@@ -3,15 +3,21 @@
 import { ref } from 'vue';
 import WaveSet from './components/WaveSet.vue';
 import { WaveState } from './model'
+import Foo from './components/Foo.vue';
 
 const waves = ref<WaveState[]>([])
+
+var id = 0;
 
 </script>
 
 <template>
-  <button @click="waves.push({playing: false})">+</button>
+  <button @click="waves.push({id: id++, playing: false})">+</button>
   <button @click="waves.pop()">-</button>
   <WaveSet :waves="waves"/>
+  <div>
+    <!-- <Foo /> -->
+  </div>
 </template>
 
 <style>

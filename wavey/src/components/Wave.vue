@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watchEffect, watch } from 'vue'
+import { ref, computed, onMounted, watchEffect, watch, onUnmounted } from 'vue'
 
 const props = defineProps<{
-    playing: boolean
+    playing: boolean,
+    gain: number,
+    audioCtx: BaseAudioContext,
+    destination?: AudioNode
 }>()
 
 const cents = ref<number>(0)
 const minCents = -1200 * 2;
 const maxCents = 1200 * 3;
 const centerValue = 440;
+
+const emit = defineEmits<{
+  (e: 'update', value: number): void
+}>()
 
 function centsToHertz(c: number): number {
     return centerValue * Math.pow(2, c / 1200)
@@ -38,18 +45,20 @@ const note = computed<string>(() => {
     return ''
 })
 
-// @ts-ignore (webkitAudioContext needed for compatibility?)
-const audioCtx = new(window.AudioContext || window.webkitAudioContext)()
-
 class OscillatorState {
     private _oscillator?: OscillatorNode
     private _frequency?: number
+    readonly gainNode: GainNode
+
+    constructor() {
+        this.gainNode = props.audioCtx.createGain()
+    }
     
     get frequency() { return this._frequency }
     
     set frequency(v: number|undefined) {
         if (v && this._oscillator) {
-            this._oscillator.frequency.setValueAtTime(v, audioCtx.currentTime)
+            this._oscillator.frequency.setValueAtTime(v, props.audioCtx.currentTime)
         }
         this._frequency = v;
     }
@@ -66,10 +75,10 @@ class OscillatorState {
         if (this._oscillator != undefined) {
             throw "already playing"
         }
-        const oscillator = audioCtx.createOscillator()
+        const oscillator = props.audioCtx.createOscillator()
         oscillator.type = 'sine'
-        oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime)
-        oscillator.connect(audioCtx.destination)
+        oscillator.frequency.setValueAtTime(freq, props.audioCtx.currentTime)
+        oscillator.connect(props.destination ? props.destination : props.audioCtx.destination)
         oscillator.start()
         this._oscillator = oscillator
     }
@@ -97,15 +106,25 @@ watch(
             oscState.stop()
         }
     }
-), 
+) 
+
+watch(
+    () => props.gain,
+    (newValue: number) => {
+        oscState.gainNode.gain.value = newValue
+    }
+) 
 
 watchEffect(() => {
-    console.log("setting frequency", frequency.value)
     oscState.frequency = frequency.value
+    emit('update', frequency.value)
 })
 
 onMounted(() => {
     cents.value = 0
+})
+onUnmounted(() => {
+    if (oscState.isPlaying) oscState.stop()
 })
 </script>
 
