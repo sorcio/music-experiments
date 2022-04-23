@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { onMounted, ref, shallowRef, watch } from 'vue';
+import { onMounted, reactive, ref, shallowRef, watch } from 'vue';
 import Wave from './Wave.vue';
 import { WaveState } from '../model'
 import Oscilloscope from './Oscilloscope.vue';
+import Lissajous from './Lissajous.vue';
 
 const props = defineProps<{
     waves: WaveState[]
@@ -14,12 +15,20 @@ const audioCtx = new(window.AudioContext || window.webkitAudioContext)()
 const sink = shallowRef<GainNode>()
 const showScope = ref(false)
 
+// Lissajous
+const showLj = ref(false)
+const ljFreqs = reactive<[number, number]>([1, 1])
+
 const startTime = 0
 const frequency = ref(440)
 
 function handleFrequencyUpdate(f: number, w: WaveState) {
-    if (w.id == props.waves[0].id) {
+    if (props.waves[0] && w.id == props.waves[0].id) {
         frequency.value = f
+        ljFreqs[0] = f
+    }
+    if (props.waves[1] && w.id == props.waves[1].id) {
+        ljFreqs[1] = f
     }
 }
 
@@ -53,5 +62,13 @@ onMounted(() => {
         Show oscilloscope
         </label>
         <Oscilloscope v-show="showScope" :source="sink" :start-time="startTime" :frequency="frequency"/>
+    </div>
+    <div>
+        <label>
+        <input type="checkbox" v-model="showLj">
+        Show Lissajous
+        </label>
+        {{ljFreqs}}
+        <Lissajous v-if="showLj" :freq="ljFreqs" />
     </div>
 </template>
